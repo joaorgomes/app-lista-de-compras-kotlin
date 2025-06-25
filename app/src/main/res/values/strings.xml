@@ -1,0 +1,48 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    //string pagina principal
+    <string name="app_name">ListaDeCompras</string>
+    <string name="my_lists_title">Minhas listas</string>
+    <string name="desc_grocery_basket">Cesta de compras</string>
+    <string name="main_title">Vamos planejar suas compras!</string>
+    <string name="main_subtitle">Toque no botão "+" para criar sua primeira lista</string>
+    <string name="fab_add_list">NOVA LISTA</string>
+    <string name="menu_ad">AD</string>
+
+    //strings menu
+    <string name="nav_rate_us">Avalie-nos com ⭐⭐⭐⭐⭐ no Google Play</string>
+    <string name="nav_share">Compartilhe</string>
+    <string name="nav_categories">Categorias</string>
+    <string name="nav_default_items">Itens padrão</string>
+    <string name="nav_support">Suporte</string>
+    <string name="nav_support_subtitle">Tire dúvidas, relate problemas ou dê sugestões</string>
+    <string name="app_version">Lista de compras 1.0</string>
+    <string name="navigation_drawer_open" tools:ignore="ReferenceType">Open navigation drawer</string>
+    <string name="navigation_drawer_close" tools:ignore="ReferenceType">Close navigation drawer</string>
+
+    //string nova lista
+    <string name="new_list_title">Nova lista</string>
+    <string name="desc_close_button">Fechar</string>
+    <string name="hint_list_name">Insira o nome da lista</string>
+    <string name="create_list_button">Criar lista</string>
+
+    <string name="desc_edit_list">Editar lista</string>
+    <string name="item_count_placeholder">%1$d/%2$d itens</string>
+
+    <string name="empty_list_items_image_description">Cesta de compras vazia</string>
+    <string name="empty_list_items_title">O que você precisa comprar?</string>
+    <string name="empty_list_items_subtitle">Toque no botão \"+\" para começar a incluir produtos</string>
+    <string name="add_item_fab_description">Adicionar novo item à lista</string>
+
+
+    <string name="add_new_item_title">Novo item</string>
+    <string name="search_item_hint">Insira o nome do item</string>
+    <string name="selected_items_title">Itens selecionados:</string>
+    <string name="suggested_items_title">Sugestões:</string>
+    <string name="finish_adding_items_button">Adicionar</string>
+    <string name="add_suggested_item_description">Adicionar item sugerido à lista</string>
+    <string name="remove_selected_item_description">Remover item selecionado</string>
+    <string name="decrease_quantity_description">Diminuir quantidade</string>
+    <string name="increase_quantity_description">Aumentar quantidade</string>
+
+</resources>

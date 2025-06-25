@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:id="@+id/group_general" android:checkableBehavior="single">
+        <item android:title="GERAL">
+            <menu>
+                <item
+                    android:id="@+id/nav_rate_us"
+                    android:icon="@drawable/ic_star_white_24dp" android:title="@string/nav_rate_us" />
+                <item
+                    android:id="@+id/nav_share"
+                    android:icon="@drawable/ic_share_white_24dp" android:title="@string/nav_share" />
+            </menu>
+        </item>
+    </group>
+
+    <group android:id="@+id/group_manage" android:checkableBehavior="single">
+        <item android:title="GERENCIAR">
+            <menu>
+                <item
+                    android:id="@+id/nav_categories"
+                    android:icon="@drawable/ic_category_white_24dp" android:title="@string/nav_categories" />
+                <item
+                    android:id="@+id/nav_default_items"
+                    android:icon="@drawable/ic_list_white_24dp" android:title="@string/nav_default_items" />
+            </menu>
+        </item>
+    </group>
+
+    <group android:id="@+id/group_contact" android:checkableBehavior="single">
+        <item android:title="CONTATO">
+            <menu>
+                <item
+                    android:id="@+id/nav_support"
+                    android:icon="@drawable/ic_support_white_24dp" android:title="@string/nav_support" />
+            </menu>
+        </item>
+    </group>
+
+</menu>
