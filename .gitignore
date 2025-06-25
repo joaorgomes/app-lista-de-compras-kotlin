@@ -1,15 +1,48 @@
-*.iml
-.gradle
+# Diretórios e arquivos de build
+/build/
+/*/build/
+/.idea/
+/.gradle/
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
 .DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+
+# Arquivos de cache e configuração
+*.iml
+*.hprof
+*.log
+*.bak
+
+# Android Studio e IntelliJ
+.idea
+*.iws
+*.ipr
+*.iml
+*.class
+
+# Arquivos do sistema
+*.swp
+*.swo
+*.tmp
+
+# Arquivos gerados pelo Gradle
+.gradle/
+build/
+
+# Arquivos específicos do Android
+captures/
+output.json
+
+# Arquivos do NDK
+obj/
+
+# Arquivos de configuração local
 local.properties
+
+# Arquivos do Keystore (se você tiver)
+*.jks
+*.keystore
+
+# Outros
+*.apk
+*.ap_
+
