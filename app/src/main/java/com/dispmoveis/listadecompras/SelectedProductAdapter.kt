@@ -91,8 +91,7 @@ class SelectedProductAdapter(
             selectedProducts.removeAt(position)
             notifyItemRemoved(position)
         }
-        // Chama o callback para que a Activity possa atualizar a UI (visibilidade do RecyclerView)
-        onRemoveClick(item) // O callback já pode ser usado para atualizar a UI
+
     }
 
     // Retorna a lista atual de itens selecionados

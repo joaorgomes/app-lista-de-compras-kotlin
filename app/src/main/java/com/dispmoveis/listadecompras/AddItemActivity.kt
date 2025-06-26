@@ -48,17 +48,35 @@ class AddItemActivity : AppCompatActivity() {
         binding.toolbarAddItem.setNavigationOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
+        // --- NOVO: Receber itens existentes e inicializar selectedItems ---
+        val existingShoppingItems = intent.getParcelableArrayListExtra<ShoppingItem>("EXISTING_SHOPPING_ITEMS")
+        existingShoppingItems?.let {
+            // Converte ShoppingItem para ProductItem para a lista de selecionados
+            it.forEach { shoppingItem ->
+                // Assumimos quantidade 1 para itens existentes se não tivermos essa info no ShoppingItem
+                // Se você tiver quantidade no ShoppingItem, use-a aqui.
+                selectedItems.add(ProductItem(shoppingItem.name, 1))
+            }
+        }
+
 
         // --- Preencher com dados de teste para sugestões ---
         populateSuggestedItems()
 
         // --- Configuração do RecyclerView de Itens Sugeridos ---
         suggestedProductAdapter = SuggestedProductAdapter(
-            filteredSuggestedItems, // Começa com todos os itens
+            filteredSuggestedItems,
             onAddClick = { productName ->
-                // Lógica para adicionar o item sugerido aos selecionados
+                // 1. Adicionar o item aos selecionados
                 selectedProductAdapter.addOrUpdateItem(ProductItem(productName, 1))
                 updateSelectedItemsUI() // Atualiza a visibilidade e o título
+
+                // 2. Remover o item da lista de sugestões filtradas
+                filteredSuggestedItems.remove(productName)
+                suggestedProductAdapter.notifyDataSetChanged() // Notifica o adapter de sugestões
+
+                // 3. Remover também da lista de todos os itens sugeridos (para que não reapareça na busca)
+                allSuggestedItems.remove(productName)
             }
         )
         binding.recyclerViewSuggestedItems.apply {
@@ -70,14 +88,22 @@ class AddItemActivity : AppCompatActivity() {
         selectedProductAdapter = SelectedProductAdapter(
             selectedItems,
             onQuantityChange = { productItem, newQuantity ->
-                // Aqui você pode adicionar lógica para persistência futura
-                // Por enquanto, apenas o adaptador já está atualizando a si mesmo
                 updateSelectedItemsUI()
             },
             onRemoveClick = { productItem ->
-                // Lógica para remover item dos selecionados
+                // 1. Remover o item da lista de selecionados
                 selectedProductAdapter.removeItem(productItem)
                 updateSelectedItemsUI() // Atualiza a visibilidade e o título
+
+                // 2. Adicionar o item de volta à lista de todos os itens sugeridos
+                // (Verifica se já não está lá para evitar duplicatas se o item foi digitado manualmente)
+                if (!allSuggestedItems.contains(productItem.name)) {
+                    allSuggestedItems.add(productItem.name)
+                    allSuggestedItems.sort() // Opcional: manter a lista ordenada
+                }
+
+                // 3. Re-filtrar e atualizar a lista de sugestões para que o item reapareça se a busca permitir
+                filterSuggestedItems(binding.editTextSearchItem.text.toString())
             }
         )
         binding.recyclerViewSelectedItems.apply {

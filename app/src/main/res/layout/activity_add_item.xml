@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -17,9 +16,10 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
-            app:titleTextColor="@android:color/white"
             app:navigationIcon="@drawable/ic_arrow_back_white_24dp"
-            app:title="@string/add_new_item_title" /> </com.google.android.material.appbar.AppBarLayout>
+            app:title="@string/add_new_item_title"
+            app:titleTextColor="@android:color/white" />
+    </com.google.android.material.appbar.AppBarLayout>
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -33,10 +33,11 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
+            android:background="@drawable/rounded_edittext_background"
             android:hint="@string/search_item_hint"
             android:inputType="text"
             android:padding="12dp"
-            android:background="@drawable/rounded_edittext_background" app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -44,56 +45,59 @@
             android:id="@+id/textViewSelectedItemsTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:text="@string/selected_items_title"
             android:layout_marginStart="16dp"
             android:layout_marginTop="16dp"
             android:layout_marginEnd="16dp"
-            android:textStyle="bold"
+            android:text="@string/selected_items_title"
             android:textSize="16sp"
+            android:textStyle="bold"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@+id/editTextSearchItem"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintTop_toBottomOf="@+id/editTextSearchItem" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewSelectedItems"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
             android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@+id/textViewSelectedItemsTitle"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textViewSelectedItemsTitle"
             tools:itemCount="3"
-            tools:listitem="@layout/item_selected_product" /> <TextView
-        android:id="@+id/textViewSuggestionsTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="@string/suggested_items_title"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="16dp"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        app:layout_constraintTop_toBottomOf="@+id/recyclerViewSelectedItems"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+            tools:listitem="@layout/item_selected_product" />
+
+        <TextView
+            android:id="@+id/textViewSuggestionsTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="16dp"
+            android:text="@string/suggested_items_title"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/recyclerViewSelectedItems" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewSuggestedItems"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:layout_marginStart="16dp"
-            android:layout_marginEnd="16dp"
             android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/textViewSuggestionsTitle"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textViewSuggestionsTitle"
             tools:itemCount="10"
-            tools:listitem="@layout/item_suggested_product" /> </androidx.constraintlayout.widget.ConstraintLayout>
+            tools:listitem="@layout/item_suggested_product" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <Button
         android:id="@+id/buttonFinishAddingItems"
@@ -101,7 +105,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:layout_margin="16dp"
-        android:text="@string/finish_adding_items_button"
-        android:paddingVertical="12dp" />
+        android:paddingVertical="12dp"
+        android:text="@string/finish_adding_items_button" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

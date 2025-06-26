@@ -98,6 +98,7 @@ class ShoppingListDetailActivity : AppCompatActivity() {
 
         binding.fabAddItem.setOnClickListener {
             val intent = Intent(this, AddItemActivity::class.java)
+            intent.putParcelableArrayListExtra("EXISTING_SHOPPING_ITEMS", ArrayList(shoppingListItems))
             addItemsLauncher.launch(intent) // Usa o launcher para iniciar a Activity e esperar o resultado
         }
     }

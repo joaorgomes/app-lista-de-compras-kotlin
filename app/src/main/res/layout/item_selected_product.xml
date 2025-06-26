@@ -11,7 +11,7 @@
         android:id="@+id/imageViewRemoveSelectedItem"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:src="@drawable/ic_remove_circle_black_24dp"
+        android:src="@drawable/ic_close_red_24dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
