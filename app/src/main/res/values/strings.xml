@@ -45,4 +45,9 @@
     <string name="decrease_quantity_description">Diminuir quantidade</string>
     <string name="increase_quantity_description">Aumentar quantidade</string>
 
+    <string name="filter_all">Todos</string>
+    <string name="filter_missing">Faltantes</string>
+    <string name="filter_purchased">Comprados</string>
+    <string name="total_value_placeholder">Valor total dos itens: R$ 0,00</string>
+
 </resources>
