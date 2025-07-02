@@ -1,53 +1,78 @@
 package com.dispmoveis.listadecompras
 
 import android.graphics.Paint
+import android.icu.text.NumberFormat
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.dispmoveis.listadecompras.databinding.ItemListItemBinding
+import java.util.Locale
 
 class ShoppingListItemAdapter(
-    private var shoppingListItems: MutableList<ShoppingItem>, // Agora lista de ShoppingItem
-    private val onItemClick: (ShoppingItem) -> Unit, // Callback para clique no item (passa ShoppingItem)
-    private val onEditClick: (ShoppingItem) -> Unit, // Callback para clique em editar (passa ShoppingItem)
-    private val onDeleteClick: (ShoppingItem) -> Unit // Callback para clique em deletar (passa ShoppingItem)
+
+    private val onItemClick: (ShoppingItem) -> Unit,
+    private val onEditClick: (ShoppingItem) -> Unit,
+    private val onDeleteClick: (ShoppingItem) -> Unit
 ) : RecyclerView.Adapter<ShoppingListItemAdapter.ShoppingListItemViewHolder>() {
+
+    private val itemsToDisplay: MutableList<ShoppingItem> = mutableListOf()
 
     inner class ShoppingListItemViewHolder(private val binding: ItemListItemBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(shoppingItem: ShoppingItem) { // Agora recebe ShoppingItem
+        fun bind(shoppingItem: ShoppingItem) {
             binding.textViewItemName.text = shoppingItem.name
 
-            // Lógica do Checkbox (marca/desmarca item como comprado)
-            binding.checkboxItem.setOnCheckedChangeListener(null) // Limpa listener para evitar loops
-            binding.checkboxItem.isChecked = shoppingItem.isPurchased // Define o estado do checkbox
+            // Exibe a quantidade
+            if (shoppingItem.customQuantityText != null && shoppingItem.customQuantityText!!.isNotEmpty()) {
+                binding.itemQuantityTextView.text = shoppingItem.customQuantityText
+            } else {
+                binding.itemQuantityTextView.text = "${shoppingItem.quantity}x"
+            }
 
+            // Exibe o preço
+            val formattedPrice = NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(shoppingItem.price)
+            binding.itemPriceTextView.text = formattedPrice
+
+            // Lógica do Checkbox (marca/desmarca item como comprado)
+            binding.checkboxItem.setOnCheckedChangeListener(null)
+            binding.checkboxItem.isChecked = shoppingItem.isPurchased
+
+            Log.d("ShoppingListItemAdapter", "DEBUG_BIND_PURCHASED: Bindando '${shoppingItem.name}', isPurchased: ${shoppingItem.isPurchased}")
             // Aplica/remove o risco no texto baseado no estado de compra
             if (shoppingItem.isPurchased) {
                 binding.textViewItemName.paintFlags =
                     binding.textViewItemName.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                binding.itemQuantityTextView.paintFlags =
+                    binding.itemQuantityTextView.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                binding.itemPriceTextView.paintFlags =
+                    binding.itemPriceTextView.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
             } else {
                 binding.textViewItemName.paintFlags =
                     binding.textViewItemName.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                binding.itemQuantityTextView.paintFlags =
+                    binding.itemQuantityTextView.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                binding.itemPriceTextView.paintFlags =
+                    binding.itemPriceTextView.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
             }
 
-            // Define o listener para o checkbox
             binding.checkboxItem.setOnCheckedChangeListener { _, isChecked ->
-                shoppingItem.isPurchased = isChecked // Atualiza o estado no modelo de dados
+                shoppingItem.isPurchased = isChecked
+                // Atualiza o risco no texto imediatamente
                 if (isChecked) {
-                    binding.textViewItemName.paintFlags =
-                        binding.textViewItemName.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                    binding.textViewItemName.paintFlags = binding.textViewItemName.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                    binding.itemQuantityTextView.paintFlags = binding.itemQuantityTextView.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
+                    binding.itemPriceTextView.paintFlags = binding.itemPriceTextView.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
                 } else {
-                    binding.textViewItemName.paintFlags =
-                        binding.textViewItemName.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                    binding.textViewItemName.paintFlags = binding.textViewItemName.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                    binding.itemQuantityTextView.paintFlags = binding.itemQuantityTextView.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
+                    binding.itemPriceTextView.paintFlags = binding.itemPriceTextView.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
                 }
-                // Opcional: Se precisar notificar a Activity sobre a mudança de estado (para persistência, etc.)
-                // onItemClick(shoppingItem) // Ou um callback específico para 'onCheckedChange'
+                onItemClick(shoppingItem) // Chama o callback
             }
 
             // Clicks nos ícones e no item inteiro
-            // Passa o objeto ShoppingItem completo nos callbacks
             binding.root.setOnClickListener { onItemClick(shoppingItem) }
             binding.imageViewEditItem.setOnClickListener { onEditClick(shoppingItem) }
             binding.imageViewDeleteItem.setOnClickListener { onDeleteClick(shoppingItem) }
@@ -60,33 +85,44 @@ class ShoppingListItemAdapter(
     }
 
     override fun onBindViewHolder(holder: ShoppingListItemViewHolder, position: Int) {
-        val item = shoppingListItems[position]
+        val item = itemsToDisplay[position]
         holder.bind(item)
     }
 
-    override fun getItemCount(): Int = shoppingListItems.size
+    override fun getItemCount(): Int = itemsToDisplay.size
 
-    // Método para atualizar a lista de itens (pode ser usado se a lista inteira mudar)
     fun updateItems(newItems: List<ShoppingItem>) {
-        shoppingListItems.clear()
-        shoppingListItems.addAll(newItems)
-        notifyDataSetChanged() // Notifica uma mudança completa no dataset
+        itemsToDisplay.clear()
+        itemsToDisplay.addAll(newItems)
+        notifyDataSetChanged()
+        Log.d("ShoppingListItemAdapter", "DEBUG_UPDATE: Lista do adapter atualizada com ${newItems.size} itens. Contagem atual: ${itemsToDisplay.size}")
+        itemsToDisplay.forEachIndexed { index, item ->
+            Log.d("ShoppingListItemAdapter", "DEBUG_UPDATE: Adapter Item[$index]: Name='${item.name}', Qtd=${item.quantity}")
+        }
     }
 
-    // Adiciona um item e notifica o adapter
-    fun addItem(item: ShoppingItem) { // Agora recebe ShoppingItem
-        shoppingListItems.add(item)
-        notifyItemInserted(shoppingListItems.size - 1)
-        // notifyDataSetChanged() // Alternativa mais "pesada", mas garante a atualização
+    fun addItem(item: ShoppingItem) {
+        // Verifica se o item já existe para não duplicar, apenas atualizar quantidade
+        val existingItem = itemsToDisplay.find { it.name == item.name }
+        if (existingItem != null) {
+            existingItem.quantity += item.quantity
+            existingItem.customQuantityText = item.customQuantityText // Atualiza texto customizado se houver
+            notifyItemChanged(itemsToDisplay.indexOf(existingItem))
+        } else {
+            itemsToDisplay.add(item)
+            notifyItemInserted(itemsToDisplay.size - 1)
+        }
+        Log.d("ShoppingListItemAdapter", "DEBUG_ADD: Item '${item.name}' adicionado/atualizado. Total: ${itemsToDisplay.size}")
     }
 
-    // Remove um item e notifica o adapter
-    fun removeItem(item: ShoppingItem) { // Agora recebe ShoppingItem
-        val position = shoppingListItems.indexOf(item)
+    fun removeItem(item: ShoppingItem) {
+        val position = itemsToDisplay.indexOf(item)
         if (position != -1) {
-            shoppingListItems.removeAt(position)
+            itemsToDisplay.removeAt(position)
+            Log.d("ShoppingListItemAdapter", "DEBUG_REMOVE: Item '${item.name}' removido da posição $position. Total: ${itemsToDisplay.size}")
             notifyItemRemoved(position)
-            // notifyDataSetChanged() // Alternativa mais "pesada"
+        }else {
+            Log.w("ShoppingListItemAdapter", "DEBUG_REMOVE: Item '${item.name}' não encontrado para remoção.")
         }
     }
 }

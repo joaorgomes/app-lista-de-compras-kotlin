@@ -1,57 +1,61 @@
 package com.dispmoveis.listadecompras
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.dispmoveis.listadecompras.databinding.ItemSelectedProductBinding
 
+
 class SelectedProductAdapter(
-    private val selectedProducts: MutableList<ProductItem>, // Lista de ProductItem
-    private val onQuantityChange: (ProductItem, Int) -> Unit, // Callback: item, nova quantidade
-    private val onRemoveClick: (ProductItem) -> Unit // Callback: item a ser removido
+    // AGORA RECEBE E MANIPULA UMA LISTA DE ShoppingItem
+
+    // Callbacks agora recebem ShoppingItem
+    private val onQuantityChange: (ShoppingItem) -> Unit,
+    private val onRemoveClick: (ShoppingItem) -> Unit
 ) : RecyclerView.Adapter<SelectedProductAdapter.SelectedProductViewHolder>() {
 
+    private var selectedItems: MutableList<ShoppingItem> = mutableListOf()
     inner class SelectedProductViewHolder(private val binding: ItemSelectedProductBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(product: ProductItem) {
-            binding.textViewSelectedProductName.text = product.name
-            binding.textViewQuantity.text = product.quantity.toString()
-
-            // Atualizar o texto da quantidade customizada se existir
-            product.customQuantityText?.let {
-                if (it.isNotEmpty()) {
-                    binding.textViewQuantity.text = it // Exibe o texto customizado
-                }
+        fun bind(item: ShoppingItem) { // AGORA RECEBE ShoppingItem
+            binding.textViewSelectedProductName.text = item.name
+            // Exibe a quantidade ou o texto customizado
+            if (item.customQuantityText != null && item.customQuantityText!!.isNotEmpty()) {
+                binding.textViewQuantity.text = item.customQuantityText
+            } else {
+                binding.textViewQuantity.text = item.quantity.toString()
             }
+
 
             // Botão de diminuir quantidade
             binding.imageViewDecreaseQuantity.setOnClickListener {
-                if (product.quantity > 1) { // Garante que a quantidade não seja menor que 1
-                    product.quantity--
-                    // Se houver texto de quantidade customizada, limpe-o ao diminuir
-                    // para forçar a exibição do número
-                    product.customQuantityText = null
-                    onQuantityChange(product, product.quantity)
-                    notifyItemChanged(adapterPosition) // Notifica que este item mudou
-                } else if (product.quantity == 1) {
-                    // Se for 1, remove o item
-                    onRemoveClick(product)
+                if (item.quantity > 1) {
+                    item.quantity--
+                    item.customQuantityText = null // Limpa texto customizado se usar o contador numérico
+                    Log.d("SelectedProductAdapter", "DEBUG_ADAPTER_QTD: Diminuindo qtd de '${item.name}' para ${item.quantity}. Posição: $adapterPosition")
+                    onQuantityChange(item) // Notifica a Activity
+                    notifyItemChanged(adapterPosition) // Notifica que este item no adapter mudou
+                } else if (item.quantity == 1) {
+                    Log.d("SelectedProductAdapter", "DEBUG_ADAPTER_QTD: Removendo '${item.name}' (qtd 1, decrease clicado). Posição: $adapterPosition")
+                    onRemoveClick(item) // Notifica a Activity para remover
                 }
             }
 
             // Botão de aumentar quantidade
             binding.imageViewIncreaseQuantity.setOnClickListener {
-                product.quantity++
-                // Se houver texto de quantidade customizada, limpe-o ao aumentar
-                product.customQuantityText = null
-                onQuantityChange(product, product.quantity)
-                notifyItemChanged(adapterPosition) // Notifica que este item mudou
+                item.quantity++
+                item.customQuantityText = null // Limpa texto customizado
+                Log.d("SelectedProductAdapter", "DEBUG_ADAPTER_QTD: Aumentando qtd de '${item.name}' para ${item.quantity}. Posição: $adapterPosition")
+                onQuantityChange(item) // Notifica a Activity
+                notifyItemChanged(adapterPosition) // Notifica que este item no adapter mudou
             }
 
             // Botão de remover completamente (o 'X' vermelho na imagem)
             binding.imageViewRemoveSelectedItem.setOnClickListener {
-                onRemoveClick(product)
+                Log.d("SelectedProductAdapter", "DEBUG_ADAPTER_REMOVE: Clicado remover para '${item.name}'. Posição: $adapterPosition")
+                onRemoveClick(item) // Notifica a Activity para remover
             }
         }
     }
@@ -62,40 +66,31 @@ class SelectedProductAdapter(
     }
 
     override fun onBindViewHolder(holder: SelectedProductViewHolder, position: Int) {
-        holder.bind(selectedProducts[position])
-    }
-
-    override fun getItemCount(): Int = selectedProducts.size
-
-    // Métodos de manipulação da lista:
-
-    // Adiciona um novo item ou incrementa quantidade se já existir
-    fun addOrUpdateItem(newItem: ProductItem) {
-        val existingItem = selectedProducts.find { it.name == newItem.name }
-        if (existingItem != null) {
-            existingItem.quantity++ // Incrementa a quantidade
-            existingItem.customQuantityText = null // Limpa texto customizado
-            notifyItemChanged(selectedProducts.indexOf(existingItem))
+        // Certifique-se de que a posição é válida
+        if (position < selectedItems.size) {
+            holder.bind(selectedItems[position])
+            Log.d("SelectedProductAdapter", "DEBUG_BIND: Bindando item na posição $position: '${selectedItems[position].name}', Qtd: ${selectedItems[position].quantity}")
         } else {
-            selectedProducts.add(newItem)
-            notifyItemInserted(selectedProducts.size - 1)
+            Log.e("SelectedProductAdapter", "DEBUG_BIND: Tentativa de bindar posição $position, mas selectedItems.size é ${selectedItems.size}. Isso é um erro de índice!")
         }
-        // Chama o callback para que a Activity possa atualizar a UI (visibilidade do RecyclerView)
-        onQuantityChange(newItem, newItem.quantity)
     }
 
-    // Remove um item da lista
-    fun removeItem(item: ProductItem) {
-        val position = selectedProducts.indexOf(item)
-        if (position != -1) {
-            selectedProducts.removeAt(position)
-            notifyItemRemoved(position)
-        }
-
+    override fun getItemCount(): Int {
+        val count = selectedItems.size
+        Log.d("SelectedProductAdapter", "DEBUG_ADAPTER_COUNT: getItemCount chamado. Retornando: $count")
+        return count
     }
 
-    // Retorna a lista atual de itens selecionados
-    fun getSelectedItems(): List<ProductItem> {
-        return selectedProducts
+    // Método crucial para atualizar a lista do adaptador e notificar a UI
+    fun updateList(newItems: List<ShoppingItem>) {
+        Log.d("SelectedProductAdapter", "DEBUG_ADAPTER_UPDATE: updateList chamado. newItems size recebido: ${newItems.size}")
+        // Limpa a lista existente e adiciona todos os novos itens
+        selectedItems.clear()
+        selectedItems.addAll(newItems)
+        notifyDataSetChanged() // Notifica o RecyclerView que o dataset completo mudou
+        Log.d("SelectedProductAdapter", "DEBUG_ADAPTER_UPDATE: Lista interna do adaptador AGORA tem: ${selectedItems.size} itens.")
+        selectedItems.forEachIndexed { index, item ->
+            Log.d("SelectedProductAdapter", "DEBUG_ADAPTER_UPDATE: Item interno[$index]: Name='${item.name}', Qtd=${item.quantity}")
+        }
     }
 }
