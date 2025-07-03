@@ -9,7 +9,8 @@ import com.dispmoveis.listadecompras.databinding.ItemShoppingListBinding // Impo
 class ShoppingListAdapter(
     private var shoppingLists: List<ShoppingList>, // Sua lista de dados
     private val onItemClick: (ShoppingList) -> Unit, // Listener para clique no item
-    private val onEditClick: (ShoppingList) -> Unit // Listener para clique no botão de editar
+    private val onEditClick: (ShoppingList) -> Unit, // Listener para clique no botão de editar
+    private val onDeleteClick: (ShoppingList) -> Unit // Listener para clique no botão de deletar
 ) : RecyclerView.Adapter<ShoppingListAdapter.ShoppingListViewHolder>() {
 
     // ViewHolder: responsável por manter as referências das Views de um item da lista
@@ -18,8 +19,14 @@ class ShoppingListAdapter(
 
         fun bind(shoppingList: ShoppingList) {
             binding.textViewListName.text = shoppingList.name
-            // Por enquanto, o contador de itens é fixo, mas será dinâmico depois
-            binding.textViewListItemCount.text = itemView.context.getString(R.string.item_count_placeholder, 0, 0)
+
+            //Contagem de itens
+            val totalItems = shoppingList.items.size
+            val purchasedItems = shoppingList.items.count { it.isPurchased }
+
+            // Atualiza o texto do contador de itens
+//            binding.textViewListItemCount.text =
+//                itemView.context.getString(R.string.item_count_placeholder, purchasedItems, totalItems)
 
             // Configura o clique no item completo
             binding.root.setOnClickListener {
@@ -29,6 +36,9 @@ class ShoppingListAdapter(
             // Configura o clique no ícone de editar
             binding.imageViewEditList.setOnClickListener {
                 onEditClick(shoppingList)
+            }
+            binding.imageViewDeleteList.setOnClickListener {
+                onDeleteClick(shoppingList)
             }
         }
     }

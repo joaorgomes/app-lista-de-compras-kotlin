@@ -1,5 +1,7 @@
 package com.dispmoveis.listadecompras
 
+import android.app.Activity // Importar Activity
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
@@ -7,6 +9,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts // Importar ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -15,6 +18,7 @@ import androidx.core.view.GravityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.dispmoveis.listadecompras.databinding.ActivityMainBinding
 import com.google.android.material.navigation.NavigationView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder // NOVO: Importar para o AlertDialog
 
 class MainActivity : AppCompatActivity(),
     NavigationView.OnNavigationItemSelectedListener,
@@ -23,15 +27,45 @@ class MainActivity : AppCompatActivity(),
     private lateinit var binding: ActivityMainBinding
     private lateinit var toggle: ActionBarDrawerToggle
 
-    // --- NOVO: Lista para armazenar as listas de compras ---
+    // --- Lista para armazenar as listas de compras ---
     private val shoppingLists = mutableListOf<ShoppingList>()
 
-    // --- NOVO: Adaptador do RecyclerView ---
+    // --- Adaptador do RecyclerView ---
     private lateinit var shoppingListAdapter: ShoppingListAdapter
 
-    companion object { // <<--- Adicione este bloco
+    companion object {
         private const val TAG = "MainActivity"
     }
+
+    // ActivityResultLauncher para editar listas
+    private val editListLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            // Usar a constante definida em EditShoppingListActivity para a chave
+            val editedList = data?.getParcelableExtra<ShoppingList>(EditShoppingListActivity.EXTRA_EDITED_SHOPPING_LIST)
+
+            editedList?.let { updatedList ->
+                Log.d(TAG, "Lista editada recebida: ${updatedList.name}, ID: ${updatedList.id}")
+
+                // Encontre a lista original na sua 'shoppingLists' pelo ID e atualize-a
+                val index = shoppingLists.indexOfFirst { it.id == updatedList.id }
+                if (index != -1) {
+                    shoppingLists[index] = updatedList // Substitui o objeto antigo pelo novo
+                    shoppingListAdapter.updateLists(shoppingLists) // Notifica o adapter
+                    Toast.makeText(this, "Lista '${updatedList.name}' atualizada!", Toast.LENGTH_SHORT).show()
+                    Log.d(TAG, "Lista '${updatedList.name}' atualizada em memória.")
+                } else {
+                    Log.e(TAG, "Lista editada não encontrada na lista principal: ${updatedList.name}, ID: ${updatedList.id}")
+                    Toast.makeText(this, "Erro ao atualizar a lista.", Toast.LENGTH_SHORT).show()
+                }
+            } ?: run {
+                Log.d(TAG, "Nenhuma lista editada recebida.")
+            }
+        } else {
+            Log.d(TAG, "Edição de lista cancelada ou falhou.")
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,20 +101,30 @@ class MainActivity : AppCompatActivity(),
 
         binding.navView.setNavigationItemSelectedListener(this)
 
-        // --- NOVO: Configuração do RecyclerView ---
+        // --- Configuração do RecyclerView ---
         // 1. Inicializa o Adapter, passando a lista de dados e os listeners de clique
         shoppingListAdapter = ShoppingListAdapter(
             shoppingLists, // A lista vazia inicialmente
             onItemClick = { clickedList ->
                 // Lógica quando um item da lista é clicado (abrir detalhes da lista, por exemplo)
-                val intent = android.content.Intent(this, ShoppingListDetailActivity::class.java)
+                val intent = Intent(this, ShoppingListDetailActivity::class.java)
                 intent.putExtra("LIST_NAME", clickedList.name) // Passa o nome da lista para a próxima Activity
+                // É uma boa prática passar o ID também se você for usar ele na tela de detalhes
+                intent.putExtra("LIST_ID", clickedList.id)
                 startActivity(intent)
             },
-            onEditClick = { editedList ->
+            onEditClick = { listToEdit ->
                 // Lógica quando o botão de editar de uma lista é clicado
-                Toast.makeText(this, "Editar lista '${editedList.name}'", Toast.LENGTH_SHORT).show()
-                // FUTURO: Abrir um Bottom Sheet ou Activity para editar o nome da lista
+                Log.d(TAG, "Clicou em editar lista: ${listToEdit.name}, ID: ${listToEdit.id}")
+                val intent = Intent(this, EditShoppingListActivity::class.java).apply {
+                    // Usar a constante definida em EditShoppingListActivity para a chave
+                    putExtra(EditShoppingListActivity.EXTRA_ORIGINAL_SHOPPING_LIST, listToEdit)
+                }
+                editListLauncher.launch(intent) // Usa o launcher para iniciar a Activity de edição
+            },
+            onDeleteClick = { listToDelete -> // NOVO: Implementação do onDeleteClick
+                Log.d(TAG, "Clicou em deletar lista: ${listToDelete.name}, ID: ${listToDelete.id}")
+                showDeleteConfirmationDialog(listToDelete)
             }
         )
 
@@ -113,6 +157,7 @@ class MainActivity : AppCompatActivity(),
 
     // --- onCreateOptionsMenu (existente) ---
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        // Não há itens de menu na toolbar principal por padrão, apenas o ícone do Drawer
         return true
     }
 
@@ -147,22 +192,50 @@ class MainActivity : AppCompatActivity(),
         return true
     }
 
-    // --- Implementação do listener do AddListBottomSheetFragment (modificado) ---
+    // --- NOVO: Função para exibir o diálogo de confirmação de exclusão ---
+    private fun showDeleteConfirmationDialog(list: ShoppingList) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Excluir Lista?")
+            .setMessage("Tem certeza que deseja excluir a lista '${list.name}'? Esta ação não pode ser desfeita.")
+            .setNegativeButton("Cancelar") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setPositiveButton("Excluir") { dialog, _ ->
+                deleteShoppingList(list)
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    // NOVO: Função para realmente remover a lista
+    private fun deleteShoppingList(listToDelete: ShoppingList) {
+        val removed = shoppingLists.remove(listToDelete) // Remove da lista mutável
+        if (removed) {
+            shoppingListAdapter.updateLists(shoppingLists) // Notifica o adapter
+            updateUIBasedOnLists() // Atualiza a visibilidade (mostra placeholder se vazia)
+            Toast.makeText(this, "Lista '${listToDelete.name}' excluída.", Toast.LENGTH_SHORT).show()
+            Log.d(TAG, "Lista '${listToDelete.name}' (ID: ${listToDelete.id}) removida com sucesso. Total de listas: ${shoppingLists.size}")
+            // FUTURO: Aqui você chamaria seu método para deletar do banco de dados
+        } else {
+            Log.e(TAG, "Erro: Lista '${listToDelete.name}' (ID: ${listToDelete.id}) não encontrada para exclusão.")
+            Toast.makeText(this, "Erro ao excluir a lista.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // --- Implementação do listener do AddListBottomSheetFragment ---
     override fun onNewListCreated(listName: String) {
         val newList = ShoppingList(name = listName) // Cria um novo objeto ShoppingList
         shoppingLists.add(newList) // Adiciona à sua lista de dados
 
         // Log para verificar se a lista foi adicionada
-        Log.d(TAG, "Lista adicionada: ${newList.name}. Total de listas: ${shoppingLists.size}")
+        Log.d(TAG, "Lista adicionada: ${newList.name}, ID: ${newList.id}. Total de listas: ${shoppingLists.size}")
 
         shoppingListAdapter.updateLists(shoppingLists) // Notifica o Adapter sobre a mudança
-        // Log para verificar se o Adapter foi notificado
 
         Log.d(TAG, "shoppingListAdapter.updateLists() chamado.")
 
         updateUIBasedOnLists() // Atualiza a visibilidade da tela
 
-        // Log para verificar se a UI foi atualizada
         Log.d(TAG, "updateUIBasedOnLists() chamado.")
 
         Toast.makeText(this, "Nova lista criada: ${newList.name}", Toast.LENGTH_LONG).show()
@@ -171,7 +244,7 @@ class MainActivity : AppCompatActivity(),
         Log.d(TAG, "Conteúdo atual da shoppingLists: $shoppingLists")
     }
 
-    // --- NOVO MÉTODO: Controla a visibilidade da tela vazia vs. RecyclerView ---
+    // --- Método para controlar a visibilidade da tela vazia vs. RecyclerView ---
     private fun updateUIBasedOnLists() {
         if (shoppingLists.isEmpty()) {
             // Se não houver listas, mostra a mensagem de tela vazia e oculta o RecyclerView

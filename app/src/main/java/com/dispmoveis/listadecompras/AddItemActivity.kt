@@ -24,6 +24,7 @@ class AddItemActivity : AppCompatActivity() {
 
     // AGORA É UMA LISTA DE ShoppingItem
     private val selectedShoppingItems = mutableListOf<ShoppingItem>()
+    private val originalExistingItems = mutableListOf<ShoppingItem>() // Para guardar a lista original
 
     private lateinit var suggestedProductAdapter: SuggestedProductAdapter
     private lateinit var selectedProductAdapter: SelectedProductAdapter
@@ -55,7 +56,10 @@ class AddItemActivity : AppCompatActivity() {
         existingItemsFromDetail?.let {
             Log.d("AddItemActivity", "DEBUG_ONCREATE: Itens recebidos para inicialização: ${it.size}")
             selectedShoppingItems.addAll(it)
+            // CLONAR A LISTA ORIGINAL PARA COMPARAÇÃO FUTURA!
+            originalExistingItems.addAll(it.map { item -> item.copy() }) // Criar cópias para não modificar a original
             Log.d("AddItemActivity", "DEBUG_ONCREATE: selectedShoppingItems após adicionar existentes: ${selectedShoppingItems.size}")
+            Log.d("AddItemActivity", "DEBUG_ONCREATE: originalExistingItems populado com ${originalExistingItems.size} itens.")
         }
 
 
@@ -70,6 +74,32 @@ class AddItemActivity : AppCompatActivity() {
         // Chamar updateUI inicialmente para configurar a visibilidade
         updateSelectedItemsUI()
         filterSuggestedItems(binding.editTextSearchItem.text.toString())
+    }
+    //MÉTODO para determinar o que foi alterado/adicionado
+    private fun getChangedOrNewItems(): ArrayList<ShoppingItem> {
+        val resultList = ArrayList<ShoppingItem>()
+
+        // Iterar sobre os itens que o usuário 'selecionou' ou modificou
+        selectedShoppingItems.forEach { currentItem ->
+            val originalItem = originalExistingItems.find { it.id == currentItem.id }
+
+            if (originalItem == null) {
+                // Este é um item completamente NOVO, que não existia na lista original
+                resultList.add(currentItem)
+                Log.d("AddItemActivity", "DEBUG_RETURN: Item NOVO detectado: '${currentItem.name}', Qtd: ${currentItem.quantity}")
+            } else {
+                // É um item existente. Verificar se a quantidade ou outros atributos mudaram.
+                // Para seu caso, o foco principal é a quantidade.
+                if (currentItem.quantity != originalItem.quantity) {
+                    // A quantidade de um item existente mudou
+                    resultList.add(currentItem) // Retorna o item com a nova quantidade
+                    Log.d("AddItemActivity", "DEBUG_RETURN: Item EXISTENTE com Qtd alterada: '${currentItem.name}', Qtd original: ${originalItem.quantity}, Qtd nova: ${currentItem.quantity}")
+                }
+                // Se isPurchased puder ser alterado aqui, você também precisaria verificar
+                // if (currentItem.isPurchased != originalItem.isPurchased) { ... }
+            }
+        }
+        return resultList
     }
 
     private fun setupSelectedItemsRecyclerView() {
@@ -156,9 +186,11 @@ class AddItemActivity : AppCompatActivity() {
         binding.buttonFinishAddingItems.setOnClickListener {
             val resultIntent = Intent()
             // Retorna a lista de ShoppingItem
-            Log.d("AddItemActivity", "DEBUG_FINISH: selectedShoppingItems size antes de retornar: ${selectedShoppingItems.size}")
-            selectedShoppingItems.forEachIndexed { index, item ->
-                Log.d("AddItemActivity", "DEBUG_FINISH: Retornando Item[$index]: Name='${item.name}', Qtd=${item.quantity}, Price=${item.price}, Purchased=${item.isPurchased}, ID=${item.id}")
+            // Retorna APENAS os itens que foram adicionados ou tiveram a quantidade alterada
+            val itemsToReturn = getChangedOrNewItems()
+            Log.d("AddItemActivity", "DEBUG_FINISH: Retornando ${itemsToReturn.size} itens (novos/modificados).")
+            itemsToReturn.forEachIndexed { index, item ->
+                Log.d("AddItemActivity", "DEBUG_FINISH: Item a retornar[$index]: Name='${item.name}', Qtd=${item.quantity}, Price=${item.price}, Purchased=${item.isPurchased}, ID=${item.id}")
             }
             resultIntent.putParcelableArrayListExtra("SELECTED_SHOPPING_ITEMS_RESULT", ArrayList(selectedShoppingItems))
             setResult(Activity.RESULT_OK, resultIntent)

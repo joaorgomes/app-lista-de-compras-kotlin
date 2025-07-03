@@ -96,9 +96,9 @@ class ShoppingListItemAdapter(
         itemsToDisplay.addAll(newItems)
         notifyDataSetChanged()
         Log.d("ShoppingListItemAdapter", "DEBUG_UPDATE: Lista do adapter atualizada com ${newItems.size} itens. Contagem atual: ${itemsToDisplay.size}")
-        itemsToDisplay.forEachIndexed { index, item ->
+        /*itemsToDisplay.forEachIndexed { index, item ->
             Log.d("ShoppingListItemAdapter", "DEBUG_UPDATE: Adapter Item[$index]: Name='${item.name}', Qtd=${item.quantity}")
-        }
+        }*/
     }
 
     fun addItem(item: ShoppingItem) {

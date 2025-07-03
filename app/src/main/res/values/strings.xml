@@ -27,7 +27,7 @@
     <string name="create_list_button">Criar lista</string>
 
     <string name="desc_edit_list">Editar lista</string>
-    <string name="item_count_placeholder">%1$d/%2$d itens</string>
+    <string name="item_count_placeholder">%1$d/%2$d itens comprados</string>
 
     <string name="empty_list_items_image_description">Cesta de compras vazia</string>
     <string name="empty_list_items_title">O que você precisa comprar?</string>
@@ -48,6 +48,12 @@
     <string name="filter_all">Todos</string>
     <string name="filter_missing">Faltantes</string>
     <string name="filter_purchased">Comprados</string>
-    <string name="total_value_placeholder">Valor total dos itens: R$ 0,00</string>
+    <string name="total_value_placeholder">Valor total dos itens: %1$s</string>
+
+    <string name="edit_list_title">Editar Lista</string>
+    <string name="edit_list_name_hint">Nome da lista</string>
+    <string name="save_button">Salvar</string>
+    <string name="desc_delete_list">Excluir lista</string>
+
 
 </resources>

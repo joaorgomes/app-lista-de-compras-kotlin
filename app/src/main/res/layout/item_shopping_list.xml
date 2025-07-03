@@ -17,27 +17,29 @@
 
         <TextView
             android:id="@+id/textViewListName"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="297dp"
+            android:layout_height="25dp"
+            android:textColor="@android:color/black"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/imageViewEditList"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
             tools:text="Compras do Mês" />
 
-        <TextView
-            android:id="@+id/textViewListItemCount"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textSize="14sp"
-            android:textColor="@android:color/darker_gray"
-            app:layout_constraintTop_toBottomOf="@+id/textViewListName"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/imageViewEditList"
-            android:layout_marginTop="4dp"
-            tools:text="0 itens" />
+<!--        <TextView-->
+<!--            android:id="@+id/textViewListItemCount"-->
+<!--            android:layout_width="251dp"-->
+<!--            android:layout_height="20dp"-->
+<!--            android:layout_marginTop="4dp"-->
+<!--            android:textColor="@android:color/darker_gray"-->
+<!--            android:textSize="14sp"-->
+<!--            app:layout_constraintEnd_toStartOf="@+id/imageViewEditList"-->
+<!--            app:layout_constraintHorizontal_bias="0.0"-->
+<!--            app:layout_constraintStart_toStartOf="parent"-->
+<!--            app:layout_constraintTop_toBottomOf="@+id/textViewListName"-->
+<!--            tools:text="0 itens" />-->
 
         <ImageView
             android:id="@+id/imageViewEditList"
@@ -51,6 +53,20 @@
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"/>
+
+        <ImageView
+            android:id="@+id/imageViewDeleteList"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginEnd="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="@string/desc_delete_list"
+            android:focusable="true"
+            android:src="@drawable/ic_delete_black_24dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

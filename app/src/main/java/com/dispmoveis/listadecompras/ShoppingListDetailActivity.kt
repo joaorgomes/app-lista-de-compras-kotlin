@@ -34,38 +34,42 @@ class ShoppingListDetailActivity : AppCompatActivity() {
     private val addItemsLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val data: Intent? = result.data
-            val newShoppingItems = data?.getParcelableArrayListExtra<ShoppingItem>("SELECTED_SHOPPING_ITEMS_RESULT")
+            val changedOrNewShoppingItems = data?.getParcelableArrayListExtra<ShoppingItem>("SELECTED_SHOPPING_ITEMS_RESULT")
 
-            newShoppingItems?.let {
-                Log.d("ShoppingListDetail", "DEBUG: Itens recebidos da AddItemActivity: ${it.size}")
-                Log.d("ShoppingListDetail", "DEBUG: shoppingListItems (ANTES do merge): ${shoppingListItems.size}")
+            changedOrNewShoppingItems?.let {
+                Log.d("ShoppingListDetail", "DEBUG: Itens recebidos (novos/modificados) da AddItemActivity: ${it.size}")
+                Log.d("ShoppingListDetail", "DEBUG: shoppingListItems (ANTES do merge na Detail): ${shoppingListItems.size}")
 
-                it.forEach { newItem ->
-                    // Verifica se o item já existe na lista principal para evitar duplicatas simples
-                    val existing = shoppingListItems.find { item -> item.name == newItem.name }
-                    if (existing != null) {
-                        existing.quantity += newItem.quantity // Soma a quantidade
-                        existing.customQuantityText = newItem.customQuantityText // Atualiza texto customizado
-                        Log.d("ShoppingListDetail", "DEBUG_MERGE: Atualizando Qtd para '${existing.name}' para ${existing.quantity}")
+                it.forEach { changedItem ->
+                    // Tenta encontrar o item na lista principal pelo ID (se ele já tiver um ID)
+                    // Ou pelo nome, se for um item novo que ainda não tem um ID do banco de dados.
+                    val existingInMainList = shoppingListItems.find { item -> item.id == changedItem.id }
+
+                    if (existingInMainList != null) {
+                        // Item existente (com ID). Atualiza todas as suas propriedades.
+                        // Isso é importante porque a quantidade pode ter mudado.
+                        existingInMainList.quantity = changedItem.quantity
+                        existingInMainList.customQuantityText = changedItem.customQuantityText
+                        existingInMainList.price = changedItem.price
+                        existingInMainList.isPurchased = changedItem.isPurchased
+                        Log.d("ShoppingListDetail", "DEBUG_MERGE_DETAIL: Item existente '${existingInMainList.name}' atualizado. Nova Qtd: ${existingInMainList.quantity}")
                     } else {
-                        shoppingListItems.add(newItem) // Adiciona novo item
-                        Log.d("ShoppingListDetail", "DEBUG_MERGE: Adicionando novo item: '${newItem.name}'")
+                        // É um item NOVO que não estava na lista original da DetailActivity
+                        // Ou um item existente que não foi identificado pelo ID (menos provável se IDs são únicos)
+                        shoppingListItems.add(changedItem)
+                        Log.d("ShoppingListDetail", "DEBUG_MERGE_DETAIL: Adicionando item completamente novo: '${changedItem.name}' Qtd: ${changedItem.quantity}")
                     }
                 }
-                Log.d("ShoppingListDetail", "DEBUG: shoppingListItems (DEPOIS do merge): ${shoppingListItems.size}")
+                Log.d("ShoppingListDetail", "DEBUG: shoppingListItems (DEPOIS do merge na Detail): ${shoppingListItems.size}")
 
                 // ESSENCIAL: Notifica o adapter COM A LISTA ATUALIZADA
-                shoppingListItemAdapter.updateItems(shoppingListItems)
-                Log.d("ShoppingListDetail", "DEBUG: Chamado shoppingListItemAdapter.updateItems com ${shoppingListItems.size} itens.")
-
-                filterList(getCurrentFilterType())
-                // ATUALIZA A UI SOMENTE DEPOIS QUE O ADAPTER JÁ TEM OS DADOS
+                filterList(getCurrentFilterType()) // Re-filtra e atualiza o adapter
                 updateUIBasedOnItems()
                 updateTotalValue()
 
                 Log.d("ShoppingListDetail", "DEBUG: Lista principal atualizada. Total de itens agora: ${shoppingListItems.size}")
             } ?: run {
-                Log.d("ShoppingListDetail", "DEBUG: Nenhum item recebido da AddItemActivity.")
+                Log.d("ShoppingListDetail", "DEBUG: Nenhum item novo/modificado recebido da AddItemActivity (lista vazia ou nula).")
             }
         } else {
             Log.d("ShoppingListDetail", "DEBUG: AddItemActivity retornou RESULT_CANCELED ou falhou.")
@@ -109,6 +113,7 @@ class ShoppingListDetailActivity : AppCompatActivity() {
 
         binding = ActivityShoppingListDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
@@ -216,13 +221,22 @@ class ShoppingListDetailActivity : AppCompatActivity() {
 
     @SuppressLint("StringFormatInvalid")
     private fun updateTotalValue() {
-        var total = 0.0
-        // Use a lista shoppingListItems para o cálculo
-        shoppingListItems.forEach { item ->
-            total += (item.quantity * item.price)
-        }
+        Log.d("ShoppingListDetail", "DEBUG_TOTAL: Iniciando cálculo do valor total dos itens comprados.")
+
+        // Lógica para somar APENAS os itens marcados como comprados
+        val total = shoppingListItems
+            .filter { it.isPurchased } // Filtra apenas os itens COMPRADOS
+            .sumOf { it.quantity * it.price }
+
+        // Formatar o valor para moeda brasileira (Real)
         val formattedTotal = NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(total)
+
+        // Atualizar o TextView no layout usando o ID que você forneceu
+        // Assumindo que você está usando View Binding para activity_shopping_list_detail.xml
         binding.totalValueTextView.text = getString(R.string.total_value_placeholder, formattedTotal)
+        Log.d("ShoppingListDetail", "DEBUG_UI_UPDATE: TextView atualizado para: ${binding.totalValueTextView.text}")
+
+        Log.d("ShoppingListDetail", "DEBUG_TOTAL: Valor total dos comprados calculado: $formattedTotal")
     }
 
     private var currentFilterType: FilterType = FilterType.ALL // Variável para rastrear o filtro atual
@@ -251,7 +265,7 @@ class ShoppingListDetailActivity : AppCompatActivity() {
             FilterType.MISSING -> shoppingListItems.filter { !it.isPurchased }
             FilterType.PURCHASED -> shoppingListItems.filter { it.isPurchased }
         }
-        shoppingListItemAdapter.updateItems(filteredItems.toMutableList()) // <<-- Envia uma CÓPIA mutável
+        shoppingListItemAdapter.updateItems(filteredItems) // <<-- Envia uma CÓPIA mutável
         Log.d("ShoppingListDetail", "Lista filtrada ($filterType): ${filteredItems.size} itens. Adapter agora tem: ${shoppingListItemAdapter.itemCount}")
     }
 
