@@ -55,5 +55,13 @@
     <string name="save_button">Salvar</string>
     <string name="desc_delete_list">Excluir lista</string>
 
+    <string name="add_new_suggestion_desc">Adicionar nova sugestão de item</string>
+    <string name="item_quantity_hint">Quantidade (opcional)</string>
+    <string name="add_new_suggested_item_dialog_title">Adicionar Nova Sugestão de Item</string>
+    <string name="new_item_name_hint">Nome do novo item</string>
+
+    <string name="action_finish_add_items">Finalizar</string>
+    <string name="new_item_fab_text">Novo Item</string>
+
 
 </resources>

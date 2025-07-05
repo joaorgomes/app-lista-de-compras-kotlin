@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     tools:context=".AddItemActivity">
 
     <com.google.android.material.appbar.AppBarLayout
@@ -63,11 +65,11 @@
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="16dp"
-            android:visibility="gone"
+            android:nestedScrollingEnabled="false" android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textViewSelectedItemsTitle"
-            tools:itemCount="3"
+            app:layout_constraintHeight_max="200dp" tools:itemCount="3"
             tools:listitem="@layout/item_selected_product" />
 
         <TextView
@@ -87,25 +89,30 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerViewSuggestedItems"
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:layout_marginStart="16dp"
+            android:layout_height="0dp" android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
             android:layout_marginEnd="16dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textViewSuggestionsTitle"
-            tools:itemCount="10"
+            android:layout_marginBottom="80dp" tools:itemCount="10"
             tools:listitem="@layout/item_suggested_product" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <Button
-        android:id="@+id/buttonFinishAddingItems"
-        android:layout_width="match_parent"
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/fabAddNewSuggestion"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
+        android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        android:paddingVertical="12dp"
-        android:text="@string/finish_adding_items_button" />
+        android:clickable="true"
+        android:focusable="true"
+        android:text="@string/new_item_fab_text"
+        android:contentDescription="@string/add_new_suggestion_desc"
+        app:icon="@drawable/ic_add_white_24dp"
+        app:backgroundTint="?attr/colorPrimary"
+        app:tint="@android:color/white"
+        app:iconTint="@android:color/white"
+        android:textColor="@android:color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
