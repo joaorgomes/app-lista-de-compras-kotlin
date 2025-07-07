@@ -13,20 +13,12 @@ class ShoppingListAdapter(
     private val onDeleteClick: (ShoppingList) -> Unit // Listener para clique no botão de deletar
 ) : RecyclerView.Adapter<ShoppingListAdapter.ShoppingListViewHolder>() {
 
-    // ViewHolder: responsável por manter as referências das Views de um item da lista
+    // ViewHolder: responsável por manter as referências das Views de uma lista
     inner class ShoppingListViewHolder(private val binding: ItemShoppingListBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun bind(shoppingList: ShoppingList) {
             binding.textViewListName.text = shoppingList.name
-
-            //Contagem de itens
-            val totalItems = shoppingList.items.size
-            val purchasedItems = shoppingList.items.count { it.isPurchased }
-
-            // Atualiza o texto do contador de itens
-//            binding.textViewListItemCount.text =
-//                itemView.context.getString(R.string.item_count_placeholder, purchasedItems, totalItems)
 
             // Configura o clique no item completo
             binding.root.setOnClickListener {

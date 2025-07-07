@@ -16,6 +16,11 @@ class EditItemActivity : AppCompatActivity() {
     private lateinit var binding: ActivityEditItemBinding
     private var originalItem: ShoppingItem? = null // Para guardar o item original
 
+    companion object {
+        // Define a constante aqui para que outras classes possam acessá-la
+        const val EXTRA_EDITED_SHOPPING_ITEM_RESULT = "EDITED_SHOPPING_ITEM_RESULT"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

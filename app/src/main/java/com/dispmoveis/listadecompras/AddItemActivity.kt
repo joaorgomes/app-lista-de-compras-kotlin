@@ -7,44 +7,49 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.Menu // NOVO: Import para Menu
-import android.view.MenuItem // NOVO: Import para MenuItem
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
 import android.widget.Toast
-
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.dispmoveis.listadecompras.databinding.ActivityAddItemBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import java.util.Locale
+import java.util.UUID // Importe UUID
 
 class AddItemActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAddItemBinding
 
-    private val allSuggestedNames = mutableListOf<String>()
+    // Nomes base de sugestões que podemos popular
+    private val allBaseSuggestedNames = mutableListOf<String>()
+    // Nomes de sugestões filtrados para exibição
     private val filteredSuggestedNames = mutableListOf<String>()
 
+    // Esta lista vai conter os itens que o usuário SELECIONOU/MODIFICOU nesta tela
+    // Inclui os que vieram da lista original e os novos
     private val selectedShoppingItems = mutableListOf<ShoppingItem>()
+
+    // Mantém uma cópia dos itens que JÁ EXISTIAM na lista quando esta Activity foi aberta
     private val originalExistingItems = mutableListOf<ShoppingItem>()
 
     private lateinit var suggestedProductAdapter: SuggestedProductAdapter
     private lateinit var selectedProductAdapter: SelectedProductAdapter
 
+    private var currentListId: String? = null // Receberemos o ID da lista da DetailActivity
+
+    companion object {
+        const val EXTRA_SELECTED_SHOPPING_ITEMS_RESULT = "SELECTED_SHOPPING_ITEMS_RESULT"
+        const val EXTRA_EXISTING_SHOPPING_ITEMS = "EXISTING_SHOPPING_ITEMS" // Itens que JÁ ESTÃO na lista
+        const val EXTRA_CURRENT_LIST_ID = "CURRENT_LIST_ID" // ID da lista para onde os itens irão
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
         binding = ActivityAddItemBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        // REMOVIDO: ViewCompat.setOnApplyWindowInsetsListener daqui
-        // Com fitsSystemWindows="true" no CoordinatorLayout no XML, o sistema lida com os insets automaticamente.
-        // O enableEdgeToEdge() já estende o conteúdo por trás das barras, e fitsSystemWindows garante o padding.
 
         setSupportActionBar(binding.toolbarAddItem)
         supportActionBar?.apply {
@@ -52,106 +57,60 @@ class AddItemActivity : AppCompatActivity() {
             title = getString(R.string.add_new_item_title)
         }
         binding.toolbarAddItem.setNavigationOnClickListener {
-            // Ao clicar na seta de voltar, também finalizamos e retornamos os itens
-            onFinishAddingItems()
+            onFinishAddingItems() // Ao clicar na seta de voltar, finalizamos e retornamos
         }
 
-        val existingItemsFromDetail = intent.getParcelableArrayListExtra<ShoppingItem>("EXISTING_SHOPPING_ITEMS")
+        // 1. Receber o ID da lista e os itens EXISTENTES
+        currentListId = intent.getStringExtra(EXTRA_CURRENT_LIST_ID)
+        val existingItemsFromDetail = intent.getParcelableArrayListExtra<ShoppingItem>(EXTRA_EXISTING_SHOPPING_ITEMS)
+
         existingItemsFromDetail?.let {
-            Log.d("AddItemActivity", "DEBUG_ONCREATE: Itens recebidos para inicialização: ${it.size}")
-            selectedShoppingItems.addAll(it)
-            originalExistingItems.addAll(it.map { item -> item.copy() })
-            Log.d("AddItemActivity", "DEBUG_ONCREATE: selectedShoppingItems após adicionar existentes: ${selectedShoppingItems.size}")
-            Log.d("AddItemActivity", "DEBUG_ONCREATE: originalExistingItems populado com ${originalExistingItems.size} itens.")
+            Log.d("AddItemActivity", "DEBUG_ONCREATE: Itens EXISTENTES recebidos: ${it.size}")
+            originalExistingItems.addAll(it) // Salva os itens originais
+            selectedShoppingItems.addAll(it.map { item -> item.copy() }) // Adiciona cópias para a lista de trabalho
+            Log.d("AddItemActivity", "DEBUG_ONCREATE: selectedShoppingItems inicializado com ${selectedShoppingItems.size} itens (incluindo existentes).")
         }
 
-        populateSuggestedItems()
+        populateBaseSuggestedNames() // Popula a lista de nomes de sugestão base
 
         setupSelectedItemsRecyclerView()
         setupSuggestedItemsRecyclerView()
 
         setupSearchInput()
-        // REMOVIDO: setupFinishButton() // Não precisamos mais deste método pois o botão foi para a Toolbar
         setupAddNewSuggestionFab()
 
-        updateSelectedItemsUI()
-        filterSuggestedItems(binding.editTextSearchItem.text.toString())
+        updateSelectedItemsUI() // Atualiza a UI de itens selecionados inicialmente
+        filterSuggestedItems(binding.editTextSearchItem.text.toString()) // Filtra sugestões inicialmente
     }
 
-    // NOVO: Inflar o menu na Toolbar
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_add_item, menu) // Assegure-se de que menu_add_item.xml existe
         return true
     }
 
-    // NOVO: Lidar com cliques nos itens do menu da Toolbar
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             R.id.action_finish_add_items -> { // Assegure-se de que este ID está em menu_add_item.xml
                 onFinishAddingItems()
                 true
             }
-            // Não precisa de um case para android.R.id.home (a seta de voltar), pois já configuramos
-            // o setNavigationOnClickListener no onCreate para chamar onFinishAddingItems().
             else -> super.onOptionsItemSelected(item)
         }
     }
 
-    // Método que centraliza a lógica de finalizar e retornar os itens
+    // Centraliza a lógica de finalizar e retornar os itens
     private fun onFinishAddingItems() {
         val resultIntent = Intent()
         Log.d("AddItemActivity", "DEBUG_FINISH: Retornando ${selectedShoppingItems.size} itens para a Detail Activity.")
-        selectedShoppingItems.forEachIndexed { index, item ->
-            Log.d("AddItemActivity", "DEBUG_FINISH: Item a retornar[$index]: Name='${item.name}', Qtd=${item.quantity}, Purchased=${item.isPurchased}, ID=${item.id}")
-        }
-        resultIntent.putParcelableArrayListExtra("SELECTED_SHOPPING_ITEMS_RESULT", ArrayList(selectedShoppingItems))
+        resultIntent.putParcelableArrayListExtra(EXTRA_SELECTED_SHOPPING_ITEMS_RESULT, ArrayList(selectedShoppingItems))
         setResult(Activity.RESULT_OK, resultIntent)
         finish()
     }
 
-
     // Sobrescreve o método onBackPressed para garantir que o retorno seja feito
     override fun onBackPressed() {
-        // Quando o usuário pressiona o botão Voltar, também finalizamos e retornamos os itens
-        onFinishAddingItems() // Chama a função centralizada
-        // super.onBackPressed() não é necessário aqui porque onFinishAddingItems já chama finish()
-    }
-
-    // MÉTODO para determinar o que foi alterado/adicionado/removido
-    // Mantido por enquanto, mas a lógica de retorno direto da lista completa é a que será usada.
-    private fun getChangedOrNewAndRemovedItems(): ArrayList<ShoppingItem> {
-        val finalResultList = ArrayList<ShoppingItem>()
-
-        // 1. Itens Adicionados ou Modificados
-        selectedShoppingItems.forEach { currentItem ->
-            val originalItem = originalExistingItems.find { it.id == currentItem.id }
-
-            if (originalItem == null) {
-                // Este é um item completamente NOVO, que não existia na lista original
-                finalResultList.add(currentItem)
-                Log.d("AddItemActivity", "DEBUG_RETURN: Item NOVO detectado: '${currentItem.name}', Qtd: ${currentItem.quantity}, ID: ${currentItem.id}")
-            } else {
-                // É um item existente. Verificar se a quantidade (ou outros atributos) mudou.
-                if (currentItem.quantity != originalItem.quantity ||
-                    currentItem.isPurchased != originalItem.isPurchased ||
-                    currentItem.name != originalItem.name ||
-                    currentItem.customQuantityText != originalItem.customQuantityText) {
-                    // Adiciona o item com as novas propriedades
-                    finalResultList.add(currentItem)
-                    Log.d("AddItemActivity", "DEBUG_RETURN: Item EXISTENTE com Qtd/Status alterado: '${currentItem.name}', Qtd original: ${originalItem.quantity}, Qtd nova: ${currentItem.quantity}, ID: ${currentItem.id}")
-                }
-            }
-        }
-
-        // 2. Itens Removidos (Esta parte não está adicionando ao finalResultList
-        // para o retorno, pois a lógica é para a ShoppingListDetailActivity conciliar)
-        originalExistingItems.forEach { originalItem ->
-            val currentItem = selectedShoppingItems.find { it.id == originalItem.id }
-            if (currentItem == null) {
-                Log.d("AddItemActivity", "DEBUG_RETURN: Item ORIGINAL removido: '${originalItem.name}', ID: ${originalItem.id}")
-            }
-        }
-        return ArrayList(selectedShoppingItems) // Retorna a lista final de itens selecionados/modificados
+        onFinishAddingItems()
+        //Super.onBackPressed() //é chamado implicitamente por finish()
     }
 
     private fun setupSelectedItemsRecyclerView() {
@@ -162,19 +121,21 @@ class AddItemActivity : AppCompatActivity() {
             },
             onRemoveClick = { itemToRemove ->
                 Log.d("AddItemActivity", "DEBUG_CALLBACK: Tentando remover '${itemToRemove.name}'. selectedShoppingItems size ANTES: ${selectedShoppingItems.size}")
-                val removed = selectedShoppingItems.remove(itemToRemove)
+                val removed = selectedShoppingItems.remove(itemToRemove) // Remove a instância correta
+
                 if (removed) {
                     Log.d("AddItemActivity", "DEBUG_CALLBACK: Item '${itemToRemove.name}' REMOVIDO. selectedShoppingItems size DEPOIS: ${selectedShoppingItems.size}")
 
-                    val wasOriginalItem = originalExistingItems.any { it.id == itemToRemove.id }
-                    if (!wasOriginalItem && !allSuggestedNames.contains(itemToRemove.name)) {
-                        allSuggestedNames.add(itemToRemove.name)
-                        allSuggestedNames.sort()
+                    // Se o item removido NÃO era um item original e NÃO é uma sugestão base, adiciona de volta às sugestões.
+                    // Isso evita que itens existentes (originais) reapareçam nas sugestões após serem removidos da seleção.
+                    val isOriginalItem = originalExistingItems.any { it.id == itemToRemove.id }
+                    if (!isOriginalItem && !allBaseSuggestedNames.contains(itemToRemove.name)) {
+                        allBaseSuggestedNames.add(itemToRemove.name)
+                        allBaseSuggestedNames.sort()
                         Log.d("AddItemActivity", "DEBUG_CALLBACK: '${itemToRemove.name}' adicionado de volta às sugestões base.")
-                    } else if (wasOriginalItem) {
-                        Log.d("AddItemActivity", "DEBUG_CALLBACK: '${itemToRemove.name}' era um item original, não adicionado de volta às sugestões.")
+                    } else if (isOriginalItem) {
+                        Log.d("AddItemActivity", "DEBUG_CALLBACK: '${itemToRemove.name}' era um item original. Não adicionado de volta às sugestões para evitar duplicação em casos de sugestões base.")
                     }
-
                     updateSelectedItemsUI()
                     filterSuggestedItems(binding.editTextSearchItem.text.toString())
                 } else {
@@ -203,15 +164,23 @@ class AddItemActivity : AppCompatActivity() {
                     selectedProductAdapter.notifyItemChanged(selectedShoppingItems.indexOf(existingItemInSelection))
                     Log.d("AddItemActivity", "DEBUG_ONADD: Incrementada quantidade de item existente na seleção: ${productName}, Qtd: ${existingItemInSelection.quantity}")
                 } else {
-                    val newItem = ShoppingItem(name = productName, quantity = 1, isPurchased = false)
+                    // Crie um NOVO ShoppingItem com um ID único e o currentListId
+                    val newItem = ShoppingItem(
+                        id = UUID.randomUUID().toString(),
+                        name = productName,
+                        quantity = 1,
+                        isPurchased = false,
+                        listId = currentListId ?: "" // Usa o ID da lista real
+                    )
                     selectedShoppingItems.add(newItem)
                     Log.d("AddItemActivity", "DEBUG_ONADD: Adicionado novo item sugerido: ${productName}, Qtd: ${newItem.quantity}.")
                 }
 
                 Log.d("AddItemActivity", "DEBUG_ONADD: selectedShoppingItems size DEPOIS da adição/incremento: ${selectedShoppingItems.size}")
 
-                allSuggestedNames.remove(productName)
-                Log.d("AddItemActivity", "DEBUG_ONADD: '$productName' removido de allSuggestedNames. AllSuggestedNames size: ${allSuggestedNames.size}")
+                // Remove o item da lista de sugestões, pois ele agora está na lista de selecionados
+                allBaseSuggestedNames.remove(productName)
+                Log.d("AddItemActivity", "DEBUG_ONADD: '$productName' removido de allBaseSuggestedNames. AllBaseSuggestedNames size: ${allBaseSuggestedNames.size}")
 
                 filterSuggestedItems(binding.editTextSearchItem.text.toString())
                 updateSelectedItemsUI()
@@ -244,7 +213,7 @@ class AddItemActivity : AppCompatActivity() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_edit_item, null)
         val etItemName: EditText = dialogView.findViewById(R.id.editTextItemName)
         val etItemQuantity: EditText = dialogView.findViewById(R.id.editTextItemQuantity)
-        etItemQuantity.visibility = View.GONE
+        etItemQuantity.visibility = View.GONE // Não precisa de quantidade aqui
 
         val currentSearchQuery = binding.editTextSearchItem.text.toString().trim()
         if (currentSearchQuery.isNotEmpty()) {
@@ -261,23 +230,34 @@ class AddItemActivity : AppCompatActivity() {
                     return@setPositiveButton
                 }
 
-                if (allSuggestedNames.any { it.equals(newItemName, ignoreCase = true) }) {
+                // Verifica se a sugestão já existe na lista base de sugestões
+                if (allBaseSuggestedNames.any { it.equals(newItemName, ignoreCase = true) }) {
                     Toast.makeText(this, "Sugestão '${newItemName}' já existe nas sugestões.", Toast.LENGTH_SHORT).show()
+                    dialog.dismiss() // Fecha o diálogo
                     return@setPositiveButton
                 }
 
+                // Verifica se o item já está na lista de itens selecionados (incluindo os originais)
                 if (selectedShoppingItems.any { it.name.equals(newItemName, ignoreCase = true) }) {
-                    Toast.makeText(this, "Item '${newItemName}' já está na sua lista selecionada. Você pode adicioná-lo por lá.", Toast.LENGTH_LONG).show()
-                    dialog.dismiss()
+                    Toast.makeText(this, "Item '${newItemName}' já está na sua lista selecionada.", Toast.LENGTH_LONG).show()
+                    dialog.dismiss() // Fecha o diálogo
                     return@setPositiveButton
                 }
 
-                allSuggestedNames.add(newItemName)
-                allSuggestedNames.sortWith(Comparator { s1, s2 ->
+                // Adiciona o novo nome à lista de sugestões base para que possa ser filtrado/sugerido no futuro
+                allBaseSuggestedNames.add(newItemName)
+                allBaseSuggestedNames.sortWith(Comparator { s1, s2 ->
                     s1.lowercase(Locale.ROOT).compareTo(s2.lowercase(Locale.ROOT))
                 })
 
-                val newItem = ShoppingItem(name = newItemName, quantity = 1, isPurchased = false)
+                // Cria o novo ShoppingItem e o adiciona à lista de selecionados
+                val newItem = ShoppingItem(
+                    id = UUID.randomUUID().toString(), // Novo ID único
+                    name = newItemName,
+                    quantity = 1,
+                    isPurchased = false,
+                    listId = currentListId ?: "" // Usa o ID da lista real
+                )
                 selectedShoppingItems.add(newItem)
                 Log.d("AddItemActivity", "DEBUG_FAB: Nova sugestão '${newItemName}' adicionada e selecionada automaticamente.")
 
@@ -293,26 +273,27 @@ class AddItemActivity : AppCompatActivity() {
             .show()
     }
 
-
-    private fun populateSuggestedItems() {
-        allSuggestedNames.addAll(listOf(
+    private fun populateBaseSuggestedNames() {
+        allBaseSuggestedNames.addAll(listOf(
             "Alface", "Arroz", "Atum", "Açúcar", "Banana", "Batata",
             "Carne bovina", "Carne frango", "Cebola", "Cenoura", "Cereal",
             "Café", "Leite", "Pão", "Ovos", "Salsicha", "Tomate", "Macarrão",
-            "Chocolate", "Refrigerante", "Feijão", "Abacaxi", "Cerveja"
+            "Chocolate", "Refrigerante", "Feijão", "Abacaxi", "Cerveja",
+            // Adicione mais sugestões conforme necessário
         ))
-        allSuggestedNames.sort()
-        Log.d("AddItemActivity", "DEBUG_POPULATE: Sugestões iniciais populadas. Total: ${allSuggestedNames.size}")
+        allBaseSuggestedNames.sort()
+        Log.d("AddItemActivity", "DEBUG_POPULATE: Sugestões iniciais populadas. Total: ${allBaseSuggestedNames.size}")
     }
 
     private fun filterSuggestedItems(query: String) {
         filteredSuggestedNames.clear()
         val lowerCaseQuery = query.lowercase(Locale.ROOT)
+        // Obtém os nomes dos itens que já estão na lista de selecionados (incluindo os originais)
         val currentSelectedNames = selectedShoppingItems.map { it.name.lowercase(Locale.ROOT) }.toSet()
 
-        Log.d("AddItemActivity", "DEBUG_FILTER: Filtrando sugestões para query: '$query'. Itens selecionados atualmente para exclusão: ${currentSelectedNames.size}")
+        Log.d("AddItemActivity", "DEBUG_FILTER: Filtrando sugestões para query: '$query'. Itens selecionados atualmente (para exclusão da sugestão): ${currentSelectedNames.size}")
 
-        for (item in allSuggestedNames) {
+        for (item in allBaseSuggestedNames) {
             val itemLowerCase = item.lowercase(Locale.ROOT)
             if (itemLowerCase.contains(lowerCaseQuery) && !currentSelectedNames.contains(itemLowerCase)) {
                 filteredSuggestedNames.add(item)
@@ -324,9 +305,6 @@ class AddItemActivity : AppCompatActivity() {
 
     private fun updateSelectedItemsUI() {
         Log.d("AddItemActivity", "DEBUG_UI: Início de updateSelectedItemsUI. selectedShoppingItems size: ${selectedShoppingItems.size}")
-        selectedShoppingItems.forEachIndexed { index, item ->
-            Log.d("AddItemActivity", "DEBUG_UI: selectedShoppingItems[$index]: Name='${item.name}', Qtd=${item.quantity}")
-        }
 
         if (selectedShoppingItems.isEmpty()) {
             binding.textViewSelectedItemsTitle.visibility = View.GONE
@@ -337,7 +315,7 @@ class AddItemActivity : AppCompatActivity() {
             binding.recyclerViewSelectedItems.visibility = View.VISIBLE
             Log.d("AddItemActivity", "DEBUG_UI: selectedShoppingItems NÃO VAZIA. Mostrando UI.")
         }
-        selectedProductAdapter.updateList(selectedShoppingItems)
+        selectedProductAdapter.updateList(selectedShoppingItems.sortedBy { it.name }) // Ordena para melhor visualização
         Log.d("AddItemActivity", "DEBUG_UI: Chamado selectedProductAdapter.updateList com ${selectedShoppingItems.size} itens (depois da chamada ao adapter).")
     }
 }

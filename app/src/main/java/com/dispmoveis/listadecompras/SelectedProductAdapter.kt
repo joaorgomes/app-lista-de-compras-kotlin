@@ -8,7 +8,7 @@ import com.dispmoveis.listadecompras.databinding.ItemSelectedProductBinding
 
 
 class SelectedProductAdapter(
-    // AGORA RECEBE E MANIPULA UMA LISTA DE ShoppingItem
+
 
     // Callbacks agora recebem ShoppingItem
     private val onQuantityChange: (ShoppingItem) -> Unit,
