@@ -13,19 +13,30 @@ import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider // Importe ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.dispmoveis.listadecompras.adapters.SelectedProductAdapter
+import com.dispmoveis.listadecompras.adapters.SuggestedProductAdapter
+import com.dispmoveis.listadecompras.database.AppDatabase // Importe AppDatabase
 import com.dispmoveis.listadecompras.databinding.ActivityAddItemBinding
+import com.dispmoveis.listadecompras.model.ShoppingItem // Use o pacote correto para ShoppingItem, se for model
+import com.dispmoveis.listadecompras.model.SuggestedProduct // NOVO: Importe a entidade SuggestedProduct
+import com.dispmoveis.listadecompras.repository.ShoppingListRepository // Importe ShoppingListRepository
+import com.dispmoveis.listadecompras.viewmodel.SuggestedProductViewModel // Importe SuggestedProductViewModel
+import com.dispmoveis.listadecompras.viewmodel.SuggestedProductViewModelFactory // Importe SuggestedProductViewModelFactory
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import java.util.Locale
-import java.util.UUID // Importe UUID
+import java.util.UUID
 
 class AddItemActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityAddItemBinding
 
-    // Nomes base de sugestões que podemos popular
-    private val allBaseSuggestedNames = mutableListOf<String>()
-    // Nomes de sugestões filtrados para exibição
+    // ESTA LISTA AGORA SERÁ POPULADA PELO VIEWMARX DO BANCO DE DADOS
+    private var allSuggestedProductsFromDb: List<SuggestedProduct> = emptyList()
+
+    // Nomes de sugestões filtrados para exibição (usará os nomes de allSuggestedProductsFromDb)
     private val filteredSuggestedNames = mutableListOf<String>()
 
     // Esta lista vai conter os itens que o usuário SELECIONOU/MODIFICOU nesta tela
@@ -37,6 +48,8 @@ class AddItemActivity : AppCompatActivity() {
 
     private lateinit var suggestedProductAdapter: SuggestedProductAdapter
     private lateinit var selectedProductAdapter: SelectedProductAdapter
+
+    private lateinit var suggestedProductViewModel: SuggestedProductViewModel // NOVO: ViewModel para sugestões
 
     private var currentListId: String? = null // Receberemos o ID da lista da DetailActivity
 
@@ -71,7 +84,26 @@ class AddItemActivity : AppCompatActivity() {
             Log.d("AddItemActivity", "DEBUG_ONCREATE: selectedShoppingItems inicializado com ${selectedShoppingItems.size} itens (incluindo existentes).")
         }
 
-        populateBaseSuggestedNames() // Popula a lista de nomes de sugestão base
+        // NOVO: Inicializar SuggestedProductViewModel
+        val database = AppDatabase.getDatabase(applicationContext)
+        val repository = ShoppingListRepository(database.shoppingListDao(), database.shoppingItemDao(), database.suggestedProductDao())
+        suggestedProductViewModel = ViewModelProvider(this, SuggestedProductViewModelFactory(repository))
+            .get(SuggestedProductViewModel::class.java)
+
+        // NOVO: Observar as sugestões do ViewModel
+        suggestedProductViewModel.allSuggestedProducts.observe(this) { suggestedProducts : List<SuggestedProduct> ->
+            allSuggestedProductsFromDb = suggestedProducts
+            Log.d("AddItemActivity", "Observer de SuggestedProducts disparado. Sugestões recebidas: ${suggestedProducts.size}")
+
+            // Popula sugestões iniciais APENAS se o banco estiver vazio.
+            // É importante verificar AQUI, após o observer ter preenchido allSuggestedProductsFromDb.
+            if (allSuggestedProductsFromDb.isEmpty()) {
+                populateInitialSuggestedNamesIfDbEmpty()
+            }
+
+            filterSuggestedItems(binding.editTextSearchItem.text.toString()) // Re-filtra e atualiza a UI
+        }
+
 
         setupSelectedItemsRecyclerView()
         setupSuggestedItemsRecyclerView()
@@ -80,7 +112,7 @@ class AddItemActivity : AppCompatActivity() {
         setupAddNewSuggestionFab()
 
         updateSelectedItemsUI() // Atualiza a UI de itens selecionados inicialmente
-        filterSuggestedItems(binding.editTextSearchItem.text.toString()) // Filtra sugestões inicialmente
+        // filterSuggestedItems já é chamado no observer do ViewModel quando as sugestões são carregadas.
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -126,18 +158,21 @@ class AddItemActivity : AppCompatActivity() {
                 if (removed) {
                     Log.d("AddItemActivity", "DEBUG_CALLBACK: Item '${itemToRemove.name}' REMOVIDO. selectedShoppingItems size DEPOIS: ${selectedShoppingItems.size}")
 
-                    // Se o item removido NÃO era um item original e NÃO é uma sugestão base, adiciona de volta às sugestões.
-                    // Isso evita que itens existentes (originais) reapareçam nas sugestões após serem removidos da seleção.
+                    // Se o item removido NÃO era um item original E seu nome não está nas sugestões atuais do banco,
+                    // adicione-o de volta como uma nova sugestão. Isso lida com itens adicionados manualmente que
+                    // não eram sugestões padrão ou já foram removidos anteriormente da seleção.
                     val isOriginalItem = originalExistingItems.any { it.id == itemToRemove.id }
-                    if (!isOriginalItem && !allBaseSuggestedNames.contains(itemToRemove.name)) {
-                        allBaseSuggestedNames.add(itemToRemove.name)
-                        allBaseSuggestedNames.sort()
-                        Log.d("AddItemActivity", "DEBUG_CALLBACK: '${itemToRemove.name}' adicionado de volta às sugestões base.")
+                    val isBaseSuggestionAlready = allSuggestedProductsFromDb.any { it.name.equals(itemToRemove.name, ignoreCase = true) }
+
+                    if (!isOriginalItem && !isBaseSuggestionAlready) {
+                        // Converte o nome de volta para um SuggestedProduct e insere no DB via ViewModel
+                        suggestedProductViewModel.insert(SuggestedProduct(name = itemToRemove.name))
+                        Log.d("AddItemActivity", "DEBUG_CALLBACK: '${itemToRemove.name}' adicionado de volta às sugestões do DB.")
                     } else if (isOriginalItem) {
-                        Log.d("AddItemActivity", "DEBUG_CALLBACK: '${itemToRemove.name}' era um item original. Não adicionado de volta às sugestões para evitar duplicação em casos de sugestões base.")
+                        Log.d("AddItemActivity", "DEBUG_CALLBACK: '${itemToRemove.name}' era um item original. Não adicionado de volta às sugestões.")
                     }
                     updateSelectedItemsUI()
-                    filterSuggestedItems(binding.editTextSearchItem.text.toString())
+                    // filterSuggestedItems() será chamado automaticamente pelo observer do ViewModel.
                 } else {
                     Log.d("AddItemActivity", "DEBUG_CALLBACK: Item '${itemToRemove.name}' NÃO encontrado para remoção.")
                 }
@@ -150,6 +185,24 @@ class AddItemActivity : AppCompatActivity() {
         }
         Log.d("AddItemActivity", "DEBUG_SETUP: SelectedProductAdapter configurado com selectedShoppingItems size: ${selectedShoppingItems.size}")
     }
+
+    // NOVO MÉTODO: Diálogo de confirmação para deletar sugestão (agora recebe SuggestedProduct)
+    private fun showDeleteSuggestionConfirmationDialog(suggestion: SuggestedProduct) {
+        MaterialAlertDialogBuilder(this)
+            .setTitle("Excluir Sugestão?")
+            .setMessage("Tem certeza que deseja remover a sugestão '${suggestion.name}' da sua lista de sugestões base? Isso não afetará os itens já adicionados às listas de compras.")
+            .setPositiveButton("Excluir") { dialog, _ ->
+                suggestedProductViewModel.delete(suggestion) // Deleta via ViewModel
+                Toast.makeText(this, "Sugestão '${suggestion.name}' removida.", Toast.LENGTH_SHORT).show()
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancelar") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    // REMOVEMOS O MÉTODO 'deleteSuggestion(String)' POIS A EXCLUSÃO AGORA É FEITA VIA VIEWMARX
 
     private fun setupSuggestedItemsRecyclerView() {
         suggestedProductAdapter = SuggestedProductAdapter(
@@ -178,12 +231,18 @@ class AddItemActivity : AppCompatActivity() {
 
                 Log.d("AddItemActivity", "DEBUG_ONADD: selectedShoppingItems size DEPOIS da adição/incremento: ${selectedShoppingItems.size}")
 
-                // Remove o item da lista de sugestões, pois ele agora está na lista de selecionados
-                allBaseSuggestedNames.remove(productName)
-                Log.d("AddItemActivity", "DEBUG_ONADD: '$productName' removido de allBaseSuggestedNames. AllBaseSuggestedNames size: ${allBaseSuggestedNames.size}")
-
-                filterSuggestedItems(binding.editTextSearchItem.text.toString())
+                // A lista de sugestões filtradas será atualizada automaticamente via o observer do ViewModel
+                // e o filterSuggestedItems já considera os itens selecionados, então não precisa remover daqui.
                 updateSelectedItemsUI()
+                filterSuggestedItems(binding.editTextSearchItem.text.toString())
+            },
+            onDeleteLongClick = { suggestionName -> // NOVO CALLBACK para clique longo
+                // Encontre o objeto SuggestedProduct completo para deletar
+                val suggestedProductToDelete = allSuggestedProductsFromDb.find { it.name == suggestionName }
+                suggestedProductToDelete?.let {
+                    showDeleteSuggestionConfirmationDialog(it) // Passa o objeto completo para o diálogo
+                } ?: Log.e("AddItemActivity", "Sugestão '$suggestionName' não encontrada para exclusão (long click).")
+                true // Indica que o evento foi consumido
             }
         )
         binding.recyclerViewSuggestedItems.apply {
@@ -230,40 +289,38 @@ class AddItemActivity : AppCompatActivity() {
                     return@setPositiveButton
                 }
 
-                // Verifica se a sugestão já existe na lista base de sugestões
-                if (allBaseSuggestedNames.any { it.equals(newItemName, ignoreCase = true) }) {
+                // Verifica se a sugestão já existe na lista de sugestões do banco de dados
+                if (allSuggestedProductsFromDb.any { it.name.equals(newItemName, ignoreCase = true) }) {
                     Toast.makeText(this, "Sugestão '${newItemName}' já existe nas sugestões.", Toast.LENGTH_SHORT).show()
-                    dialog.dismiss() // Fecha o diálogo
+                    dialog.dismiss()
                     return@setPositiveButton
                 }
 
                 // Verifica se o item já está na lista de itens selecionados (incluindo os originais)
                 if (selectedShoppingItems.any { it.name.equals(newItemName, ignoreCase = true) }) {
                     Toast.makeText(this, "Item '${newItemName}' já está na sua lista selecionada.", Toast.LENGTH_LONG).show()
-                    dialog.dismiss() // Fecha o diálogo
+                    dialog.dismiss()
                     return@setPositiveButton
                 }
 
-                // Adiciona o novo nome à lista de sugestões base para que possa ser filtrado/sugerido no futuro
-                allBaseSuggestedNames.add(newItemName)
-                allBaseSuggestedNames.sortWith(Comparator { s1, s2 ->
-                    s1.lowercase(Locale.ROOT).compareTo(s2.lowercase(Locale.ROOT))
-                })
+                // NOVO: Insere a nova sugestão no banco de dados via ViewModel
+                val newSuggestedProduct = SuggestedProduct(name = newItemName)
+                suggestedProductViewModel.insert(newSuggestedProduct)
+                Log.d("AddItemActivity", "DEBUG_FAB: Nova sugestão '${newItemName}' adicionada ao DB e selecionada automaticamente.")
 
                 // Cria o novo ShoppingItem e o adiciona à lista de selecionados
                 val newItem = ShoppingItem(
-                    id = UUID.randomUUID().toString(), // Novo ID único
+                    id = UUID.randomUUID().toString(),
                     name = newItemName,
                     quantity = 1,
                     isPurchased = false,
                     listId = currentListId ?: "" // Usa o ID da lista real
                 )
                 selectedShoppingItems.add(newItem)
-                Log.d("AddItemActivity", "DEBUG_FAB: Nova sugestão '${newItemName}' adicionada e selecionada automaticamente.")
 
                 Toast.makeText(this, "Sugestão '${newItemName}' adicionada e selecionada!", Toast.LENGTH_SHORT).show()
 
-                filterSuggestedItems(binding.editTextSearchItem.text.toString())
+                // filterSuggestedItems será chamado automaticamente pelo observer quando o DB atualizar
                 updateSelectedItemsUI()
                 dialog.dismiss()
             }
@@ -273,17 +330,25 @@ class AddItemActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun populateBaseSuggestedNames() {
-        allBaseSuggestedNames.addAll(listOf(
-            "Alface", "Arroz", "Atum", "Açúcar", "Banana", "Batata",
-            "Carne bovina", "Carne frango", "Cebola", "Cenoura", "Cereal",
-            "Café", "Leite", "Pão", "Ovos", "Salsicha", "Tomate", "Macarrão",
-            "Chocolate", "Refrigerante", "Feijão", "Abacaxi", "Cerveja",
-            // Adicione mais sugestões conforme necessário
-        ))
-        allBaseSuggestedNames.sort()
-        Log.d("AddItemActivity", "DEBUG_POPULATE: Sugestões iniciais populadas. Total: ${allBaseSuggestedNames.size}")
+    // MODIFICADO: Populamos sugestões apenas se o banco de dados estiver vazio
+    private fun populateInitialSuggestedNamesIfDbEmpty() {
+        // Verifica allSuggestedProductsFromDb, que é preenchido pelo LiveData do ViewModel
+        if (allSuggestedProductsFromDb.isEmpty()) {
+            val initialSuggestions = listOf(
+                "Alface", "Arroz", "Atum", "Açúcar", "Banana", "Batata",
+                "Carne bovina", "Carne frango", "Cebola", "Cenoura", "Cereal",
+                "Café", "Leite", "Pão", "Ovos", "Salsicha", "Tomate", "Macarrão",
+                "Chocolate", "Refrigerante", "Feijão", "Abacaxi", "Cerveja"
+                // Adicione mais sugestões conforme necessário
+            ).map { SuggestedProduct(name = it) } // Mapeia para SuggestedProduct
+
+            initialSuggestions.forEach { suggestedProductViewModel.insert(it) }
+            Log.d("AddItemActivity", "DEBUG_POPULATE: Sugestões iniciais populadas no DB. Total: ${initialSuggestions.size}")
+        } else {
+            Log.d("AddItemActivity", "DEBUG_POPULATE: Banco de dados de sugestões já contém itens. Não populando iniciais.")
+        }
     }
+
 
     private fun filterSuggestedItems(query: String) {
         filteredSuggestedNames.clear()
@@ -293,13 +358,14 @@ class AddItemActivity : AppCompatActivity() {
 
         Log.d("AddItemActivity", "DEBUG_FILTER: Filtrando sugestões para query: '$query'. Itens selecionados atualmente (para exclusão da sugestão): ${currentSelectedNames.size}")
 
-        for (item in allBaseSuggestedNames) {
-            val itemLowerCase = item.lowercase(Locale.ROOT)
+        // Agora filtra a partir de allSuggestedProductsFromDb
+        for (suggestedProduct in allSuggestedProductsFromDb) {
+            val itemLowerCase = suggestedProduct.name.lowercase(Locale.ROOT)
             if (itemLowerCase.contains(lowerCaseQuery) && !currentSelectedNames.contains(itemLowerCase)) {
-                filteredSuggestedNames.add(item)
+                filteredSuggestedNames.add(suggestedProduct.name) // Adiciona APENAS o nome para o adapter
             }
         }
-        suggestedProductAdapter.updateSuggestions(filteredSuggestedNames)
+        suggestedProductAdapter.updateSuggestions(filteredSuggestedNames.sorted()) // Certifica-se de que a lista está ordenada
         Log.d("AddItemActivity", "DEBUG_FILTER: Sugestões filtradas. Total: ${filteredSuggestedNames.size}. Sugeridos exibidos: ${suggestedProductAdapter.itemCount}")
     }
 

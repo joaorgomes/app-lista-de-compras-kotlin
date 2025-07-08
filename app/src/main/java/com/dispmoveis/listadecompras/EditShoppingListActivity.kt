@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.dispmoveis.listadecompras.databinding.ActivityEditShoppingListBinding
+import com.dispmoveis.listadecompras.model.ShoppingList
 
 class EditShoppingListActivity : AppCompatActivity() {
 

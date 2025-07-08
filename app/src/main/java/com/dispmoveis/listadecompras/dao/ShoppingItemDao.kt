@@ -5,7 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Delete
-import com.dispmoveis.listadecompras.ShoppingItem // Importe sua entidade
+import com.dispmoveis.listadecompras.model.ShoppingItem // Importe sua entidade
 import kotlinx.coroutines.flow.Flow
 
 @Dao

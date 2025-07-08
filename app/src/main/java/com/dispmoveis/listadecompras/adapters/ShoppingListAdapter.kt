@@ -1,9 +1,9 @@
-package com.dispmoveis.listadecompras
+package com.dispmoveis.listadecompras.adapters
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.dispmoveis.listadecompras.model.ShoppingList
 import com.dispmoveis.listadecompras.databinding.ItemShoppingListBinding // Importe a classe de binding gerada
 
 class ShoppingListAdapter(

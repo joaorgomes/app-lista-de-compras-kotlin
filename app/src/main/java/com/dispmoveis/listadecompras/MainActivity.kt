@@ -1,6 +1,5 @@
 package com.dispmoveis.listadecompras
 
-import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -10,23 +9,21 @@ import android.view.View
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.GravityCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.dispmoveis.listadecompras.adapters.ShoppingListAdapter
 import com.dispmoveis.listadecompras.database.AppDatabase
 import com.dispmoveis.listadecompras.databinding.ActivityMainBinding
+import com.dispmoveis.listadecompras.model.ShoppingList
 import com.dispmoveis.listadecompras.repository.ShoppingListRepository
 import com.dispmoveis.listadecompras.viewmodel.ShoppingListViewModel
 import com.dispmoveis.listadecompras.viewmodel.ShoppingListViewModelFactory
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.snackbar.Snackbar
 import org.threeten.bp.LocalDate
 
 class MainActivity : AppCompatActivity(),
@@ -70,7 +67,7 @@ class MainActivity : AppCompatActivity(),
         binding.navView.setNavigationItemSelectedListener(this)
 
         val database = AppDatabase.getDatabase(applicationContext)
-        val repository = ShoppingListRepository(database.shoppingListDao(), database.shoppingItemDao())
+        val repository = ShoppingListRepository(database.shoppingListDao(), database.shoppingItemDao(),database.suggestedProductDao())
         shoppingListViewModel = ViewModelProvider(this, ShoppingListViewModelFactory(repository))
             .get(ShoppingListViewModel::class.java)
 

@@ -1,4 +1,4 @@
-package com.dispmoveis.listadecompras
+package com.dispmoveis.listadecompras.model
 
 import android.os.Parcelable
 import androidx.room.Entity

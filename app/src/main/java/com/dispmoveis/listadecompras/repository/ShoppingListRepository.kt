@@ -2,15 +2,18 @@ package com.dispmoveis.listadecompras.repository // Ajuste o pacote
 
 import com.dispmoveis.listadecompras.dao.ShoppingListDao
 import com.dispmoveis.listadecompras.dao.ShoppingItemDao // Pode ser útil para lógica futura de contadores
-import com.dispmoveis.listadecompras.ShoppingList
-import com.dispmoveis.listadecompras.ShoppingItem
+import com.dispmoveis.listadecompras.dao.SuggestedProductDao
+import com.dispmoveis.listadecompras.model.ShoppingList
+import com.dispmoveis.listadecompras.model.ShoppingItem
+import com.dispmoveis.listadecompras.model.SuggestedProduct
 import kotlinx.coroutines.flow.Flow
 
 // A classe Repository não é @Injectable diretamente (por enquanto, para simplificar)
 // Ela vai receber os DAOs no construtor
 class ShoppingListRepository(
     private val shoppingListDao: ShoppingListDao,
-    private val shoppingItemDao: ShoppingItemDao // Embora este repo seja focado em listas, podemos ter acesso aos itens para contagem, etc.
+    private val shoppingItemDao: ShoppingItemDao, // Embora este repo seja focado em listas, podemos ter acesso aos itens para contagem, etc.
+    private val suggestedProductDao: SuggestedProductDao
 ) {
     // ---- Operações para ShoppingList ----
     val allShoppingLists: Flow<List<ShoppingList>> = shoppingListDao.getAllShoppingLists()
@@ -62,6 +65,16 @@ class ShoppingListRepository(
 
     suspend fun getShoppingItemById(itemId: String): ShoppingItem? {
         return shoppingItemDao.getShoppingItemById(itemId)
+    }
+    suspend fun insertSuggestedProduct(suggestedProduct: SuggestedProduct) {
+        suggestedProductDao.insert(suggestedProduct)
+    }
+    suspend fun deleteSuggestedProduct(suggestedProduct: SuggestedProduct) {
+        suggestedProductDao.delete(suggestedProduct)
+    }
+
+    fun getAllSuggestedProducts(): Flow<List<SuggestedProduct>> {
+        return suggestedProductDao.getAllSuggestedProducts()
     }
 
 

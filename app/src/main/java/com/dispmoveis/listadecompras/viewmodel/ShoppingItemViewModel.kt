@@ -7,10 +7,8 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asFlow
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
-import com.dispmoveis.listadecompras.ShoppingItem
+import com.dispmoveis.listadecompras.model.ShoppingItem
 import com.dispmoveis.listadecompras.repository.ShoppingListRepository // O mesmo repositório pode lidar com itens
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow // Importe Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 

@@ -1,4 +1,4 @@
-package com.dispmoveis.listadecompras
+package com.dispmoveis.listadecompras.adapters
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -7,7 +7,8 @@ import com.dispmoveis.listadecompras.databinding.ItemSuggestedProductBinding
 
 class SuggestedProductAdapter(
     private var suggestedProducts: List<String>, // Lista de nomes de produtos sugeridos
-    private val onAddClick: (String) -> Unit // Callback para quando o botão '+' é clicado
+    private val onAddClick: (String) -> Unit, // Callback para quando o botão '+' é clicado
+    private val onDeleteLongClick: (String) -> Boolean // NOVO CALLBACK: para o clique longo para deletar uma sugestão
 ) : RecyclerView.Adapter<SuggestedProductAdapter.SuggestedProductViewHolder>() {
 
     inner class SuggestedProductViewHolder(private val binding: ItemSuggestedProductBinding) :
@@ -17,6 +18,12 @@ class SuggestedProductAdapter(
             binding.textViewSuggestedItemName.text = productName
             binding.imageViewAddSuggestedItem.setOnClickListener {
                 onAddClick(productName)
+            }
+
+            // ADICIONAR ESTE BLOCO para o clique longo
+            binding.root.setOnLongClickListener {
+                onDeleteLongClick(productName)
+                true // Indica que o evento de clique longo foi consumido
             }
         }
     }

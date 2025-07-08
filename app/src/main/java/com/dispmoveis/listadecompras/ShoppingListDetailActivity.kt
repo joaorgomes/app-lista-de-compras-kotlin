@@ -5,7 +5,6 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
@@ -18,8 +17,10 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.dispmoveis.listadecompras.adapters.ShoppingListItemAdapter
 import com.dispmoveis.listadecompras.database.AppDatabase
 import com.dispmoveis.listadecompras.databinding.ActivityShoppingListDetailBinding
+import com.dispmoveis.listadecompras.model.ShoppingItem
 import com.dispmoveis.listadecompras.repository.ShoppingListRepository
 import com.dispmoveis.listadecompras.viewmodel.ShoppingItemViewModel
 import com.dispmoveis.listadecompras.viewmodel.ShoppingItemViewModelFactory
@@ -164,7 +165,7 @@ class ShoppingListDetailActivity : AppCompatActivity() {
         }
 
         val database = AppDatabase.getDatabase(applicationContext)
-        val repository = ShoppingListRepository(database.shoppingListDao(), database.shoppingItemDao())
+        val repository = ShoppingListRepository(database.shoppingListDao(), database.shoppingItemDao(),database.suggestedProductDao())
 
         shoppingItemViewModel = ViewModelProvider(this, ShoppingItemViewModelFactory(repository))
             .get(ShoppingItemViewModel::class.java)

@@ -1,4 +1,4 @@
-package com.dispmoveis.listadecompras
+package com.dispmoveis.listadecompras.adapters
 
 import android.graphics.Paint
 import android.icu.text.NumberFormat
@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.dispmoveis.listadecompras.model.ShoppingItem
 import com.dispmoveis.listadecompras.databinding.ItemListItemBinding
 import java.util.Locale
 

@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.asLiveData // Para converter Flow em LiveData
 import androidx.lifecycle.viewModelScope
-import com.dispmoveis.listadecompras.ShoppingList
+import com.dispmoveis.listadecompras.model.ShoppingList
 import com.dispmoveis.listadecompras.repository.ShoppingListRepository
 import kotlinx.coroutines.launch
 
