@@ -18,7 +18,7 @@ import com.dispmoveis.listadecompras.utils.Converters // NOVO: Importar a classe
     version = 1, // Versão do banco de dados. Incremente se mudar o esquema.
     exportSchema = false // Recomendado para apps pequenos/desenvolvimento
 )
-@TypeConverters(Converters::class) // NOVO: Anotar para usar os TypeConverters
+@TypeConverters(Converters::class) //Anotação para usar os TypeConverters
 abstract class AppDatabase : RoomDatabase() {
 
     // Métodos abstratos para acessar seus DAOs
@@ -39,7 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "shopping_list_db" // Nome do arquivo do banco de dados
                 )
-                    //.addMigrations(MIGRATION_1_2) // Adicione aqui se precisar de migrações futuras
+                    //.addMigrations(MIGRATION_1_2) //migrações futuras
                     .build()
                 INSTANCE = instance
                 instance

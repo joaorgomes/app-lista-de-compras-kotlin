@@ -22,6 +22,7 @@ import com.dispmoveis.listadecompras.database.AppDatabase
 import com.dispmoveis.listadecompras.databinding.ActivityShoppingListDetailBinding
 import com.dispmoveis.listadecompras.model.ShoppingItem
 import com.dispmoveis.listadecompras.repository.ShoppingListRepository
+import com.dispmoveis.listadecompras.utils.FilterType
 import com.dispmoveis.listadecompras.viewmodel.ShoppingItemViewModel
 import com.dispmoveis.listadecompras.viewmodel.ShoppingItemViewModelFactory
 import com.dispmoveis.listadecompras.viewmodel.ShoppingListViewModel
@@ -42,7 +43,7 @@ class ShoppingListDetailActivity : AppCompatActivity() {
 
     private lateinit var currentListId: String
 
-    // Adicionado para manter uma cópia dos itens atuais vindos do banco de dados (via LiveData)
+    //Aqui mantem uma cópia dos itens atuais vindos do banco de dados (via LiveData)
     private var currentItemsInDb: List<ShoppingItem> = emptyList()
 
     companion object {
@@ -57,8 +58,6 @@ class ShoppingListDetailActivity : AppCompatActivity() {
             val finalSelectedItems = data?.getParcelableArrayListExtra<ShoppingItem>(AddItemActivity.EXTRA_SELECTED_SHOPPING_ITEMS_RESULT)
 
             finalSelectedItems?.let { returnedItems ->
-                Log.d("ShoppingListDetail", "Itens retornados da AddItemActivity: ${returnedItems.size}")
-
                 // Lógica de conciliação:
                 val itemsToAdd = mutableListOf<ShoppingItem>()
                 val itemsToUpdate = mutableListOf<ShoppingItem>()
@@ -68,7 +67,6 @@ class ShoppingListDetailActivity : AppCompatActivity() {
                 for (returnedItem in returnedItems) {
                     val existingItem = currentItemsInDb.find { it.id == returnedItem.id }
                     if (existingItem == null) {
-                        // Item completamente novo (ID não encontrado no banco de dados atual)
                         itemsToAdd.add(returnedItem.copy(listId = currentListId)) // Garante o listId correto
                     } else if (existingItem != returnedItem) { // Verifica se algo mudou (usa data class equals)
                         // Item existente com propriedades modificadas
@@ -88,22 +86,22 @@ class ShoppingListDetailActivity : AppCompatActivity() {
                 if (itemsToAdd.isNotEmpty()) {
                     shoppingItemViewModel.insertItems(itemsToAdd)
                     Snackbar.make(binding.root, "${itemsToAdd.size} novos itens adicionados!", Snackbar.LENGTH_SHORT).show()
-                    Log.d("ShoppingListDetail", "Adicionados: ${itemsToAdd.map { it.name }}")
+                    //Log.d("ShoppingListDetail", "Adicionados: ${itemsToAdd.map { it.name }}")
                 }
                 if (itemsToUpdate.isNotEmpty()) {
                     itemsToUpdate.forEach { item -> shoppingItemViewModel.update(item) }
                     Snackbar.make(binding.root, "${itemsToUpdate.size} itens atualizados!", Snackbar.LENGTH_SHORT).show()
-                    Log.d("ShoppingListDetail", "Atualizados: ${itemsToUpdate.map { it.name }}")
+                    //Log.d("ShoppingListDetail", "Atualizados: ${itemsToUpdate.map { it.name }}")
                 }
                 if (itemsToDelete.isNotEmpty()) {
                         itemsToDelete.forEach { item -> shoppingItemViewModel.delete(item) } // OU shoppingItemViewModel.deleteItems(itemsToDelete) se tiver um método em massa
                         Snackbar.make(binding.root, "${itemsToDelete.size} itens removidos!", Snackbar.LENGTH_SHORT).show()
-                         Log.d("ShoppingListDetail", "Removidos: ${itemsToDelete.map { it.name }}")
+                         //Log.d("ShoppingListDetail", "Removidos: ${itemsToDelete.map { it.name }}")
                      }
                 if (itemsToDelete.isNotEmpty()) {
                     shoppingItemViewModel.deleteItems(itemsToDelete) // Chame o novo método de exclusão em massa
                     Snackbar.make(binding.root, "${itemsToDelete.size} itens removidos!", Snackbar.LENGTH_SHORT).show()
-                    Log.d("ShoppingListDetail", "Removidos: ${itemsToDelete.map { it.name }}")
+                    //Log.d("ShoppingListDetail", "Removidos: ${itemsToDelete.map { it.name }}")
                 }
 
 
@@ -126,14 +124,13 @@ class ShoppingListDetailActivity : AppCompatActivity() {
             val editedItem = data?.getParcelableExtra<ShoppingItem>(EditItemActivity.EXTRA_EDITED_SHOPPING_ITEM_RESULT)
 
             editedItem?.let { updatedItem ->
-                Log.d("ShoppingListDetail", "Item editado recebido da EditItemActivity: '${updatedItem.name}', Qtd=${updatedItem.quantity}, Price=${updatedItem.price}, Purchased=${updatedItem.isPurchased}")
                 shoppingItemViewModel.update(updatedItem) // Atualiza via ViewModel
                 Toast.makeText(this, "Item '${updatedItem.name}' editado com sucesso!", Toast.LENGTH_SHORT).show()
             } ?: run {
                 Log.d("ShoppingListDetail", "Nenhum item editado recebido da EditItemActivity.")
             }
         } else {
-            Log.d("ShoppingListDetail", "Edição de item na EditItemActivity cancelada ou falhou.")
+            //Log.d("ShoppingListDetail", "Edição de item na EditItemActivity cancelada ou falhou.")
         }
     }
 
@@ -179,7 +176,6 @@ class ShoppingListDetailActivity : AppCompatActivity() {
             onItemClick = { clickedItem ->
                 val updatedItem = clickedItem.copy(isPurchased = !clickedItem.isPurchased)
                 shoppingItemViewModel.update(updatedItem)
-                Toast.makeText(this, "Estado de '${clickedItem.name}' alterado!", Toast.LENGTH_SHORT).show()
             },
             onEditClick = { itemToEdit ->
                 val intent = Intent(this, EditItemActivity::class.java).apply {
@@ -198,7 +194,6 @@ class ShoppingListDetailActivity : AppCompatActivity() {
         }
 
         shoppingItemViewModel.itemsForCurrentList.observe(this) { items ->
-            Log.d("ShoppingListDetail", "Observer de itemsForCurrentList disparado. Itens recebidos: ${items.size}")
             currentItemsInDb = items // <-- MUITO IMPORTANTE: Atualiza a lista de itens do banco
             val filteredItems = applyFilter(items, getCurrentFilterType())
             shoppingListItemAdapter.updateItems(filteredItems)
@@ -276,19 +271,16 @@ class ShoppingListDetailActivity : AppCompatActivity() {
             binding.textViewEmptyItemsTitle.visibility = View.VISIBLE
             binding.textViewEmptyItemsSubtitle.visibility = View.VISIBLE
             binding.recyclerViewListItems.visibility = View.GONE
-            Log.d("ShoppingListDetail", "Lista de itens vazia. Mostrando placeholder.")
         } else {
             binding.imageViewEmptyItems.visibility = View.GONE
             binding.textViewEmptyItemsTitle.visibility = View.GONE
             binding.textViewEmptyItemsSubtitle.visibility = View.GONE
             binding.recyclerViewListItems.visibility = View.VISIBLE
-            Log.d("ShoppingListDetail", "Itens existentes. Mostrando RecyclerView.")
         }
     }
 
     @SuppressLint("StringFormatInvalid")
     private fun updateTotalValue(items: List<ShoppingItem>) {
-        Log.d("ShoppingListDetail", "Iniciando cálculo do valor total dos itens comprados.")
 
         val total = items
             .filter { it.isPurchased }
@@ -297,9 +289,7 @@ class ShoppingListDetailActivity : AppCompatActivity() {
         val formattedTotal = NumberFormat.getCurrencyInstance(Locale("pt", "BR")).format(total)
 
         binding.totalValueTextView.text = getString(R.string.total_value_placeholder, formattedTotal)
-        Log.d("ShoppingListDetail", "TextView atualizado para: ${binding.totalValueTextView.text}")
 
-        Log.d("ShoppingListDetail", "Valor total dos comprados calculado: $formattedTotal")
     }
 
     private var currentFilterType: FilterType = FilterType.ALL
@@ -324,7 +314,6 @@ class ShoppingListDetailActivity : AppCompatActivity() {
         shoppingItemViewModel.itemsForCurrentList.value?.let { allItems ->
             val filteredItems = applyFilter(allItems, filterType)
             shoppingListItemAdapter.updateItems(filteredItems)
-            Log.d("ShoppingListDetail", "Lista filtrada ($filterType): ${filteredItems.size} itens. Adapter agora tem: ${shoppingListItemAdapter.itemCount}")
         }
     }
 

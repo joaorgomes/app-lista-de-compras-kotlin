@@ -23,10 +23,6 @@ class ShoppingListViewModel(private val repository: ShoppingListRepository) : Vi
         repository.updateShoppingList(shoppingList)
     }
 
-    // Função para deletar uma lista de compras
-    /*fun delete(shoppingList: ShoppingList) = viewModelScope.launch {
-        repository.deleteShoppingList(shoppingList)
-    }*/
     fun delete(shoppingList: ShoppingList) {
         viewModelScope.launch {
             // Com ForeignKey.CASCADE, o Room deletará os itens automaticamente.
@@ -34,10 +30,6 @@ class ShoppingListViewModel(private val repository: ShoppingListRepository) : Vi
         }
     }
 
-    // Função para obter uma lista pelo ID (usada talvez para verificar existência ou detalhes)
-    suspend fun getShoppingListById(listId: String): ShoppingList? {
-        return repository.getShoppingListById(listId)
-    }
 }
 
 // Factory para instanciar o ViewModel com um construtor personalizado

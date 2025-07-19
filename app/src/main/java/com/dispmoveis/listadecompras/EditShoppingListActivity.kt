@@ -49,11 +49,9 @@ class EditShoppingListActivity : AppCompatActivity() {
         originalShoppingList = intent.getParcelableExtra(EXTRA_ORIGINAL_SHOPPING_LIST)
 
         originalShoppingList?.let { list ->
-            Log.d(TAG, "Recebendo lista para edição: ${list.name}, ID: ${list.id}")
             binding.editTextListName.setText(list.name) // Preenche o EditText com o nome atual
         } ?: run {
             Log.e(TAG, "Nenhuma ShoppingList recebida para edição.")
-            Toast.makeText(this, "Erro: Nenhuma lista para editar.", Toast.LENGTH_SHORT).show()
             finish() // Fecha a activity se não houver lista
         }
 
@@ -73,8 +71,6 @@ class EditShoppingListActivity : AppCompatActivity() {
 
         originalShoppingList?.let { originalList ->
             val editedList = originalList.copy(name = newName) // Cria uma cópia com o novo nome
-            Log.d(TAG, "Lista editada: Original ID: ${originalList.id}, Novo Nome: ${editedList.name}")
-
             val resultIntent = Intent().apply {
                 putExtra(EXTRA_EDITED_SHOPPING_LIST, editedList)
             }
@@ -83,7 +79,7 @@ class EditShoppingListActivity : AppCompatActivity() {
         }
     }
 
-    // Opcional: lida com o botão "voltar" do sistema (navegação por gesto/botão)
+    // Lida com o botão "voltar" do sistema (navegação por gesto/botão)
     override fun onBackPressed() {
         setResult(Activity.RESULT_CANCELED) // Se o usuário voltar, cancela a operação
         super.onBackPressed()

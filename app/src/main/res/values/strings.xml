@@ -1,7 +1,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     //string pagina principal
-    <string name="app_name">ListaDeCompras</string>
+    <string name="app_name">Lista De Compras</string>
     <string name="my_lists_title">Minhas listas</string>
     <string name="desc_grocery_basket">Cesta de compras</string>
     <string name="main_title">Vamos planejar suas compras!</string>

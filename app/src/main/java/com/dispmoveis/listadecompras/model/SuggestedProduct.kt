@@ -6,9 +6,13 @@ import androidx.room.PrimaryKey
 import kotlinx.parcelize.Parcelize
 import java.util.UUID
 
+/**
+ * Data class que representa uma lista de sugestoes de itens.
+ */
+
 @Parcelize
-@Entity(tableName = "suggested_products") // Nome da nova tabela
+@Entity(tableName = "suggested_products") // Nome da tabela
 data class SuggestedProduct(
-    @PrimaryKey val id: String = UUID.randomUUID().toString(), // ID único para cada sugestão
-    val name: String // O nome do produto sugerido
+    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    val name: String
 ) : Parcelable

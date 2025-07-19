@@ -7,6 +7,10 @@ import androidx.room.PrimaryKey
 import kotlinx.android.parcel.Parcelize
 import java.util.UUID
 
+/**
+ * Data class que representa um Item a ser adicionado a uma lista de compras.
+ */
+
 @Parcelize
 @Entity(
     tableName = "shopping_items",

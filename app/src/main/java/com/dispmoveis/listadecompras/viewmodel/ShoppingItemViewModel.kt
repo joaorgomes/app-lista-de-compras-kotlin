@@ -8,7 +8,7 @@ import androidx.lifecycle.asFlow
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.dispmoveis.listadecompras.model.ShoppingItem
-import com.dispmoveis.listadecompras.repository.ShoppingListRepository // O mesmo repositório pode lidar com itens
+import com.dispmoveis.listadecompras.repository.ShoppingListRepository
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 
@@ -59,12 +59,11 @@ class ShoppingItemViewModel(private val repository: ShoppingListRepository) : Vi
             repository.updateListCounters(listId) // Atualiza os contadores da lista pai
         }
     }
-    fun deleteItems(items: List<ShoppingItem>) { // NOVO MÉTODO
+    fun deleteItems(items: List<ShoppingItem>) {
         viewModelScope.launch {
             repository.deleteShoppingItems(items)
         }
     }
-
 }
 
 // Factory para instanciar o ViewModel com um construtor personalizado

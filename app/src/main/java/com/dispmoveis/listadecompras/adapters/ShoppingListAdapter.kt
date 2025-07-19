@@ -7,7 +7,7 @@ import com.dispmoveis.listadecompras.model.ShoppingList
 import com.dispmoveis.listadecompras.databinding.ItemShoppingListBinding // Importe a classe de binding gerada
 
 class ShoppingListAdapter(
-    private var shoppingLists: List<ShoppingList>, // Sua lista de dados
+    private var shoppingLists: List<ShoppingList>, //Lista de dados
     private val onItemClick: (ShoppingList) -> Unit, // Listener para clique no item
     private val onEditClick: (ShoppingList) -> Unit, // Listener para clique no botão de editar
     private val onDeleteClick: (ShoppingList) -> Unit // Listener para clique no botão de deletar

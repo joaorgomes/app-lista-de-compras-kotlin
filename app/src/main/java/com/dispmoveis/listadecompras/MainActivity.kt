@@ -74,18 +74,20 @@ class MainActivity : AppCompatActivity(),
         shoppingListAdapter = ShoppingListAdapter(
             emptyList(),
             onItemClick = { clickedList ->
+                // 1. Cria um Intent para ir para ShoppingListDetailActivity
                 val intent = Intent(this, ShoppingListDetailActivity::class.java).apply {
-                    putExtra("LIST_ID", clickedList.id)
-                    putExtra("LIST_NAME", clickedList.name)
+                    // putExtra(chave, valor) para adicionar os dados
+                    putExtra("LIST_ID", clickedList.id) // Enviando o ID da lista
+                    putExtra("LIST_NAME", clickedList.name)// Enviando o nome da lista
                 }
                 startActivity(intent)
             },
             onEditClick = { listToEdit ->
-                Log.d(TAG, "Clicou em editar lista: ${listToEdit.name}, ID: ${listToEdit.id}")
+                //Log.d(TAG, "Clicou em editar lista: ${listToEdit.name}, ID: ${listToEdit.id}")
                 showEditListDialog(listToEdit)
             },
             onDeleteClick = { listToDelete ->
-                Log.d(TAG, "Clicou em deletar lista: ${listToDelete.name}, ID: ${listToDelete.id}")
+                //Log.d(TAG, "Clicou em deletar lista: ${listToDelete.name}, ID: ${listToDelete.id}")
                 showDeleteConfirmationDialog(listToDelete)
             }
         )
@@ -96,7 +98,6 @@ class MainActivity : AppCompatActivity(),
         }
 
         shoppingListViewModel.allShoppingLists.observe(this) { shoppingListsFromDb ->
-            Log.d(TAG, "Observer de allShoppingLists disparado. Listas recebidas: ${shoppingListsFromDb.size}")
             shoppingListAdapter.updateLists(shoppingListsFromDb)
             updateUIBasedOnLists(shoppingListsFromDb.isEmpty())
         }
@@ -116,21 +117,20 @@ class MainActivity : AppCompatActivity(),
         }
     }
 
-    // MODIFICADO: Não infla nenhum menu.
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         // Não infla nenhum menu de opções na toolbar por padrão,
         // pois a navegação da gaveta já é gerenciada pelo ActionBarDrawerToggle.
         return true
     }
 
-    // MODIFICADO: Remove a lógica para R.id.action_archive_all.
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         // Deixa o ActionBarDrawerToggle lidar com o clique no ícone do hambúrguer.
         if (toggle.onOptionsItemSelected(item)) {
             return true
         }
-        // Se houver outros itens de menu que você adicionar no futuro, você os trataria aqui.
-        // Por enquanto, apenas repassa para a superclasse.
+        //Itens de menu para adicionar no futuro
+        //repassa para a superclasse.
         return super.onOptionsItemSelected(item)
     }
 
@@ -174,9 +174,8 @@ class MainActivity : AppCompatActivity(),
                 if (newName.isNotEmpty()) {
                     val updatedList = shoppingList.copy(name = newName)
                     shoppingListViewModel.update(updatedList)
-                    Toast.makeText(this, "Lista atualizada para '$newName'!", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this, "O nome da lista não pode estar vazio.", Toast.LENGTH_SHORT).show()
+                    //Toast.makeText(this, "O nome da lista não pode estar vazio.", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("Cancelar", null)

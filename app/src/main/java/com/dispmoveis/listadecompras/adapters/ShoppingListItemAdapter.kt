@@ -40,7 +40,6 @@ class ShoppingListItemAdapter(
             binding.checkboxItem.setOnCheckedChangeListener(null)
             binding.checkboxItem.isChecked = shoppingItem.isPurchased
 
-            Log.d("ShoppingListItemAdapter", "DEBUG_BIND_PURCHASED: Bindando '${shoppingItem.name}', isPurchased: ${shoppingItem.isPurchased}")
             // Aplica/remove o risco no texto baseado no estado de compra
             if (shoppingItem.isPurchased) {
                 binding.textViewItemName.paintFlags =
@@ -96,7 +95,6 @@ class ShoppingListItemAdapter(
         itemsToDisplay.clear()
         itemsToDisplay.addAll(newItems)
         notifyDataSetChanged()
-        Log.d("ShoppingListItemAdapter", "DEBUG_UPDATE: Lista do adapter atualizada com ${newItems.size} itens. Contagem atual: ${itemsToDisplay.size}")
         /*itemsToDisplay.forEachIndexed { index, item ->
             Log.d("ShoppingListItemAdapter", "DEBUG_UPDATE: Adapter Item[$index]: Name='${item.name}', Qtd=${item.quantity}")
         }*/
@@ -120,7 +118,6 @@ class ShoppingListItemAdapter(
         val position = itemsToDisplay.indexOf(item)
         if (position != -1) {
             itemsToDisplay.removeAt(position)
-            Log.d("ShoppingListItemAdapter", "DEBUG_REMOVE: Item '${item.name}' removido da posição $position. Total: ${itemsToDisplay.size}")
             notifyItemRemoved(position)
         }else {
             Log.w("ShoppingListItemAdapter", "DEBUG_REMOVE: Item '${item.name}' não encontrado para remoção.")

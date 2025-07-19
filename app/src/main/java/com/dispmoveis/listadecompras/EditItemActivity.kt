@@ -52,8 +52,6 @@ class EditItemActivity : AppCompatActivity() {
             }
             binding.cbIsPurchased.isChecked = item.isPurchased
         } ?: run {
-            // Se não recebeu item, provavelmente é um erro (ou está criando novo, mas não é o caso aqui)
-            Toast.makeText(this, "Erro: Item não encontrado para edição.", Toast.LENGTH_LONG).show()
             finish() // Fecha a activity se não tem item para editar
             return
         }
@@ -85,7 +83,7 @@ class EditItemActivity : AppCompatActivity() {
             quantity = quantityText.toIntOrNull() ?: 1
         } else { // Se não é número, é texto customizado
             customQuantity = quantityText
-            quantity = 1 // Por padrão, defina 1 para a quantidade numérica se for customizada
+            quantity = 1 // Por padrão é  1 para a quantidade numérica se for customizada
         }
 
         val price = priceText.toDoubleOrNull() ?: 0.0 // Converte para Double, 0.0 se for vazio/inválido
@@ -93,7 +91,6 @@ class EditItemActivity : AppCompatActivity() {
         val isPurchased = binding.cbIsPurchased.isChecked
 
         // Criar um novo ShoppingItem com os dados editados.
-        // É importante manter o mesmo ID do original para poder atualizá-lo na lista principal.
         val editedItem = originalItem?.copy(
             name = name,
             quantity = quantity,

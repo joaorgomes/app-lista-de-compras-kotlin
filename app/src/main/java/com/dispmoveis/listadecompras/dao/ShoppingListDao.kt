@@ -21,7 +21,7 @@ interface ShoppingListDao {
     suspend fun deleteShoppingList(shoppingList: ShoppingList)
 
     // Consulta para obter todas as listas de compras, ordenadas por data (ou nome)
-    // Usamos Flow para que a UI seja automaticamente atualizada quando houver mudanças.
+    // Usa Flow para que a UI seja automaticamente atualizada quando houver mudanças.
     @Query("SELECT * FROM shopping_lists ORDER BY date DESC, name ASC")
     fun getAllShoppingLists(): Flow<List<ShoppingList>> // `Flow` não precisa de `suspend`
 

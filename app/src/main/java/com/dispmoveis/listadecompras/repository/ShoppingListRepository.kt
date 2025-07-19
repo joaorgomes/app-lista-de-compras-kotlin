@@ -8,8 +8,8 @@ import com.dispmoveis.listadecompras.model.ShoppingItem
 import com.dispmoveis.listadecompras.model.SuggestedProduct
 import kotlinx.coroutines.flow.Flow
 
-// A classe Repository não é @Injectable diretamente (por enquanto, para simplificar)
-// Ela vai receber os DAOs no construtor
+
+// Recebe os DAOs no construtor
 class ShoppingListRepository(
     private val shoppingListDao: ShoppingListDao,
     private val shoppingItemDao: ShoppingItemDao, // Embora este repo seja focado em listas, podemos ter acesso aos itens para contagem, etc.
@@ -28,7 +28,6 @@ class ShoppingListRepository(
 
     suspend fun deleteShoppingList(shoppingList: ShoppingList) {
         // Ao deletar uma lista, seus itens são deletados automaticamente devido ao onDelete = ForeignKey.CASCADE
-        // mas podemos adicionar uma lógica aqui se precisar de algo mais
         shoppingListDao.deleteShoppingList(shoppingList)
     }
 

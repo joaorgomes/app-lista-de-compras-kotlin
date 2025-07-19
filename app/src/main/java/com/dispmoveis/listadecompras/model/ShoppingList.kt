@@ -12,7 +12,7 @@ import java.util.UUID
 @Parcelize
 @Entity(tableName = "shopping_lists")
 data class ShoppingList(
-    @PrimaryKey // NOVO: Define 'id' como a chave primária
+    @PrimaryKey //Define 'id' como a chave primária
     val id: String = UUID.randomUUID().toString(),
     var name: String,
     var date: org.threeten.bp.LocalDate? = null,

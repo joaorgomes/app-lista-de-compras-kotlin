@@ -14,23 +14,23 @@ interface ShoppingItemDao {
     @Insert
     suspend fun insertShoppingItem(shoppingItem: ShoppingItem)
 
-    @Insert
-    suspend fun insertShoppingItems(shoppingItems: List<ShoppingItem>) // Para inserir múltiplos itens
-
     @Update
     suspend fun updateShoppingItem(shoppingItem: ShoppingItem)
-
-    @Update
-    suspend fun updateShoppingItems(shoppingItems: List<ShoppingItem>) // Para atualizar múltiplos itens
 
     @Delete
     suspend fun deleteShoppingItem(shoppingItem: ShoppingItem)
 
     @Delete
-    suspend fun deleteShoppingItems(shoppingItems: List<ShoppingItem>) // Para deletar múltiplos itens
+    suspend fun deleteItems(items: List<ShoppingItem>)
+
+    @Update
+    suspend fun updateShoppingItems(shoppingItems: List<ShoppingItem>) // Para atualizar múltiplos itens
 
     @Delete
-    suspend fun deleteItems(items: List<ShoppingItem>)
+    suspend fun deleteShoppingItems(shoppingItems: List<ShoppingItem>) // Para deletar múltiplos itens
+
+    @Insert
+    suspend fun insertShoppingItems(shoppingItems: List<ShoppingItem>) // Para inserir múltiplos itens
 
 
 
