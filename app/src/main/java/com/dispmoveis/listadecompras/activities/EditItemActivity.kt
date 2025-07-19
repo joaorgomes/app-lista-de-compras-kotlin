@@ -1,4 +1,4 @@
-package com.dispmoveis.listadecompras
+package com.dispmoveis.listadecompras.activities
 
 import android.app.Activity
 import android.content.Intent

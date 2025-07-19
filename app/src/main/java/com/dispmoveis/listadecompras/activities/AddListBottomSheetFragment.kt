@@ -1,10 +1,11 @@
-package com.dispmoveis.listadecompras
+package com.dispmoveis.listadecompras.activities
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import com.dispmoveis.listadecompras.R
 import com.dispmoveis.listadecompras.databinding.BottomSheetAddListBinding // Importe a classe de binding gerada
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 

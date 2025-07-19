@@ -1,4 +1,4 @@
-package com.dispmoveis.listadecompras
+package com.dispmoveis.listadecompras.activities
 
 import android.app.Activity
 import android.content.Intent
@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider // Importe ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.dispmoveis.listadecompras.R
 import com.dispmoveis.listadecompras.adapters.SelectedProductAdapter
 import com.dispmoveis.listadecompras.adapters.SuggestedProductAdapter
 import com.dispmoveis.listadecompras.database.AppDatabase // Importe AppDatabase
@@ -25,7 +26,6 @@ import com.dispmoveis.listadecompras.repository.ShoppingListRepository // Import
 import com.dispmoveis.listadecompras.viewmodel.SuggestedProductViewModel // Importe SuggestedProductViewModel
 import com.dispmoveis.listadecompras.viewmodel.SuggestedProductViewModelFactory // Importe SuggestedProductViewModelFactory
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.snackbar.Snackbar
 import java.util.Locale
 import java.util.UUID
 
@@ -75,7 +75,9 @@ class AddItemActivity : AppCompatActivity() {
 
         // 1. Receber o ID da lista e os itens EXISTENTES
         currentListId = intent.getStringExtra(EXTRA_CURRENT_LIST_ID)
-        val existingItemsFromDetail = intent.getParcelableArrayListExtra<ShoppingItem>(EXTRA_EXISTING_SHOPPING_ITEMS)
+        val existingItemsFromDetail = intent.getParcelableArrayListExtra<ShoppingItem>(
+            EXTRA_EXISTING_SHOPPING_ITEMS
+        )
 
         existingItemsFromDetail?.let {
             originalExistingItems.addAll(it) // Salva os itens originais

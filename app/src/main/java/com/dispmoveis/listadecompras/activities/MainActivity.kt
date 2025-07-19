@@ -1,4 +1,4 @@
-package com.dispmoveis.listadecompras
+package com.dispmoveis.listadecompras.activities
 
 import android.content.Intent
 import android.os.Bundle
@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.dispmoveis.listadecompras.R
 import com.dispmoveis.listadecompras.adapters.ShoppingListAdapter
 import com.dispmoveis.listadecompras.database.AppDatabase
 import com.dispmoveis.listadecompras.databinding.ActivityMainBinding
